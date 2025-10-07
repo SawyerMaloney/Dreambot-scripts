@@ -21,18 +21,16 @@ public class TreeCutter extends TaskNode {
     private String tree_name = "Tree";
     private String axe_name = "Bronze axe";
 
-    public static int inventories = 0;
-    public static final int inventory_limit = 3;
-
     @Override
     public boolean accept() {
-        return AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit && inventories < inventory_limit;
+        return AIO_Scheduler.tree_inv < AIO_Scheduler.individual_inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
     }
 
     private int bankForAxe() {
         if (Bank.open()) {
             Bank.depositAllItems();
-            if (!Bank.withdraw(axe_name)) {
+            Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 5000);
+            if (!Inventory.contains(axe_name)) {
                 Logger.log("Failed to find axe " + axe_name);
                 return -1;
             }
@@ -98,8 +96,7 @@ public class TreeCutter extends TaskNode {
         } else {
             if (Bank.open()) {
                 int status = deposit();
-                inventories += 1;
-                AIO_Scheduler.inventories += 1;
+                AIO_Scheduler.updateInventories(2);
                 if (status == -1) {
                     return -1;
                 }

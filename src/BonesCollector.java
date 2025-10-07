@@ -1,9 +1,6 @@
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.item.GroundItems;
-import org.dreambot.api.script.AbstractScript;
-import org.dreambot.api.script.Category;
-import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.wrappers.items.GroundItem;

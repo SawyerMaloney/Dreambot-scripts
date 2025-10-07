@@ -1,9 +1,6 @@
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.skills.Skill;
-import org.dreambot.api.script.AbstractScript;
-import org.dreambot.api.script.Category;
-import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.methods.container.impl.Inventory;
@@ -17,7 +14,7 @@ import org.dreambot.api.methods.interactive.Players;
 
 
 public class Fisher extends TaskNode {
-    private boolean initalized = false;
+    private boolean initialized = false;
 
     private final Tile small_net_tile = new Tile(3241, 3149);
     private final Tile fly_fishing_tile = new Tile(3108, 3433);
@@ -28,31 +25,31 @@ public class Fisher extends TaskNode {
     private String interact = "Net";
     private String fishing_spot_name = "Fishing spot";
 
-    public static int inventories = 0;
-    public static int inventory_limit = 3;
-
     private void initialize() {
         Logger.log("Starting fishing bot...");
         setNames();
         Logger.log("Starting script with rod " + rod_name + " and feathers " + feathers + ".");
-        initalized = true;
+        initialized = true;
     }
     @Override
     public boolean accept() {
-        return inventories < inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
+        return AIO_Scheduler.fisher_inv < AIO_Scheduler.individual_inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
     }
 
     private int retrieveRod() {
         if (Bank.open()) {
             Sleep.sleep(Calculations.random(0, 100));
-            Bank.depositAllItems();
+            Bank.depositAllExcept("Feather", rod_name);
             Sleep.sleep(Calculations.random(500, 1000));
-            if (!Bank.withdraw(rod_name)) {
-                Logger.log("Failed to get rod " + rod_name + ".");
+            Sleep.sleepUntil(() -> Bank.withdraw(rod_name), 5000);
+            if (!Inventory.contains(rod_name)) {
+                Logger.log("Failed to get rod " + rod_name);
                 return -1;
             }
+            Sleep.sleep(Calculations.random(500, 1000));
             if (feathers) {
-                if (!Bank.withdrawAll("Feather")) {
+                Sleep.sleepUntil(() -> Bank.withdrawAll("Feather"), 5000);
+                if (!Inventory.contains("Feather")) {
                     Logger.log("Failed to get feathers");
                     return -1;
                 }
@@ -79,7 +76,7 @@ public class Fisher extends TaskNode {
 
     @Override
     public int execute() {
-        if (!initalized) {
+        if (!initialized) {
             initialize();
         }
         if (!Inventory.contains(rod_name) || (feathers && !Inventory.contains("Feather"))) {
@@ -107,8 +104,7 @@ public class Fisher extends TaskNode {
             Logger.log("Full inventory. Dropping fish.");
             fishing = false;
             Inventory.dropAll("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon");
-            inventories += 1;
-            AIO_Scheduler.inventories += 1;
+            AIO_Scheduler.updateInventories(0);
             setNames();
         }
         return 500 + Calculations.random(100, 500);

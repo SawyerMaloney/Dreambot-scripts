@@ -1,9 +1,6 @@
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.skills.Skill;
-import org.dreambot.api.script.AbstractScript;
-import org.dreambot.api.script.Category;
-import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.methods.container.impl.Inventory;
@@ -14,9 +11,6 @@ import org.dreambot.api.methods.interactive.GameObjects;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.interactive.Players;
-
-@ScriptManifest(name = "Mining Tool", description = "AIO Mining tool.", author = "sawyerdm",
-        version = 1.0, category = Category.MINING)
 
 public class Miner extends TaskNode {
     private boolean initialized = false;
@@ -30,9 +24,6 @@ public class Miner extends TaskNode {
 
     private final Tile iron_rock_to_skip = new Tile(3285, 3369);
 
-    public static int inventories = 0;
-    public static int inventory_limit = 3;
-
     private void initialize() {
         Logger.log("Starting script...");
         setNames();
@@ -42,7 +33,7 @@ public class Miner extends TaskNode {
 
     @Override
     public boolean accept() {
-        return inventories < inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
+        return AIO_Scheduler.miner_inv < AIO_Scheduler.individual_inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
     }
 
     @Override
@@ -59,8 +50,7 @@ public class Miner extends TaskNode {
             } else if (status == 1) {  // we have the correct pickaxe; otherwise, we are getting it
                 if (Inventory.isFull()) {
                     Inventory.dropAll("Tin ore", "Iron ore");
-                    inventories += 1;
-                    AIO_Scheduler.inventories += 1;
+                    AIO_Scheduler.updateInventories(1);
                 }
                 if (destination.distance() > 1) {
                     Walking.walk(destination);
@@ -76,7 +66,9 @@ public class Miner extends TaskNode {
         if (!Inventory.contains(pickaxe_name)) {
             if (Bank.open()) {
                 Bank.depositAllItems();
-                if (!Bank.withdraw(pickaxe_name)) {
+                Sleep.sleep(Calculations.random(500, 1000));
+                Sleep.sleepUntil(() -> Bank.withdraw(pickaxe_name), 5000);
+                if (!Inventory.contains(pickaxe_name)) {
                     Logger.log("Failed to get pickaxe");
                     return -1;
                 }
