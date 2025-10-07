@@ -4,6 +4,7 @@ import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
+import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.walking.impl.Walking;
@@ -17,7 +18,8 @@ import org.dreambot.api.methods.interactive.Players;
 @ScriptManifest(name = "Mining Tool", description = "AIO Mining tool.", author = "sawyerdm",
         version = 1.0, category = Category.MINING)
 
-public class Miner extends AbstractScript {
+public class Miner extends TaskNode {
+    private boolean initialized = false;
 
     private String rock_name = "Tin rocks";
     private String pickaxe_name = "Black pickaxe";
@@ -28,50 +30,68 @@ public class Miner extends AbstractScript {
 
     private final Tile iron_rock_to_skip = new Tile(3285, 3369);
 
-    @Override
-    public void onStart() {
+    public int inventories = 0;
+    public int inventory_limit = 3;
+
+    private void initialize() {
         Logger.log("Starting script...");
         setNames();
         Logger.log("Starting script with pick: " + pickaxe_name + ", ore: " +  rock_name);
+        initialized = true;
     }
 
     @Override
-    public int onLoop() {
+    public boolean accept() {
+        return inventories < inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
+    }
+
+    @Override
+    public int execute() {
+        if (!initialized) {
+            initialize();
+        }
         Logger.log("In loop with pick: " + pickaxe_name + ", ore: " +  rock_name);
         if (!Players.getLocal().isAnimating()) {
             setNames();
-            if (!Inventory.contains(pickaxe_name)) {
-                if (Bank.open()) {
-                    Bank.depositAllItems();
-                    if (!Bank.withdraw(pickaxe_name)) {
-                        Logger.log("Failed to get pickaxe");
-                        return -1;
-                    }
-                }
-            } else {
+            int status = ensureCorrectPick();
+            if (status == -1) {
+                return -1;
+            } else if (status == 1) {  // we have the correct pickaxe; otherwise, we are getting it
                 if (Inventory.isFull()) {
                     Inventory.dropAll("Tin ore", "Iron ore");
                 }
                 if (destination.distance() > 1) {
                     Walking.walk(destination);
                 } else {
-                    Logger.log("Finding new rock");
-                    Sleep.sleep(Calculations.random(200, 1000));
-                    GameObject rock = GameObjects.closest(rock_name);
-                    if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2 && !rock.getTile().equals(iron_rock_to_skip)) {
-                        Logger.log("Rock real, reachable. Interacting. Index: " + rock.getIndex());
-                        rock.interact("Mine");
-                    }
+                    findInteractRock();
                 }
-                return 500 + Calculations.random(0, 500);
             }
         }
         return 500 +  Calculations.random(0, 1000);
     }
 
-    @Override
-    public void onExit() {
-        Logger.log("Stopping script...");
+    private int ensureCorrectPick() {
+        if (!Inventory.contains(pickaxe_name)) {
+            if (Bank.open()) {
+                Bank.depositAllItems();
+                if (!Bank.withdraw(pickaxe_name)) {
+                    Logger.log("Failed to get pickaxe");
+                    return -1;
+                }
+            }
+            return 0;
+        }
+        return 1;
+    }
+
+    private void findInteractRock() {
+        Logger.log("Finding new rock");
+        Sleep.sleep(Calculations.random(200, 1000));
+        GameObject rock = GameObjects.closest(rock_name);
+        if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2 && !rock.getTile().equals(iron_rock_to_skip)) {
+            Logger.log("Rock real, reachable. Interacting. Index: " + rock.getIndex());
+            rock.interact("Mine");
+        }
     }
 
     private void setNames() {
@@ -98,4 +118,6 @@ public class Miner extends AbstractScript {
             destination = iron_rock_tile;
         }
     }
+
+
 }

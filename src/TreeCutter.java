@@ -26,7 +26,7 @@ public class TreeCutter extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit && inventories < inventory_limit; //
+        return AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit && inventories < inventory_limit;
     }
 
     private int bankForAxe() {
@@ -98,6 +98,8 @@ public class TreeCutter extends TaskNode {
         } else {
             if (Bank.open()) {
                 int status = deposit();
+                inventories += 1;
+                AIO_Scheduler.inventories += 1;
                 if (status == -1) {
                     return -1;
                 }
