@@ -1,3 +1,5 @@
+package f2pVariedTrainer;
+
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.impl.TaskScript;
@@ -21,7 +23,7 @@ public class AIO_Scheduler extends TaskScript {
     @Override
     public void onStart() {
         Logger.log("Scheduler starting.");
-        // addNodes(new BonesCollector(), new Fisher(), new Miner(), new TreeCutter());
+        // addNodes(new f2pVariedTrainer.BonesCollector(), new f2pVariedTrainer.Fisher(), new f2pVariedTrainer.Miner(), new f2pVariedTrainer.TreeCutter());
         addNodes(new Fisher(), new Miner(), new TreeCutter());
     }
 
