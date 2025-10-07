@@ -58,8 +58,8 @@ public class Miner extends AbstractScript {
                     Logger.log("Finding new rock");
                     Sleep.sleep(Calculations.random(200, 1000));
                     GameObject rock = GameObjects.closest(rock_name);
-                    if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2 && rock.getIndex() != -4503587711215435L) {
-                        Logger.log("Rock real, reachable. Interacting.");
+                    if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2 && rock.getIndex() != -4503587711219539L) {
+                        Logger.log("Rock real, reachable. Interacting. Index: " + rock.getIndex());
                         rock.interact("Mine");
                     }
                 }
