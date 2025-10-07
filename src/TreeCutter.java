@@ -29,26 +29,37 @@ public class TreeCutter extends AbstractScript {
     public void onStart() {
         Logger.log("Starting script...");
         Logger.log("Current woodcutting skill: " + Skills.getRealLevel(Skill.WOODCUTTING));
+        updateTreeAndAxe();
+        Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ".");
+    }
+
+    private void updateTreeAndAxe() {
         int skill = Skills.getRealLevel(Skill.WOODCUTTING);
-        if (skill >= 31) {
+
+        // set axe
+        if (skill >= 41) {
+            axe_name = "Rune axe";
+        } else if (skill >= 31) {
             axe_name = "Adamant axe";
         } else if (skill >= 21) {
             axe_name = "Mithril axe";
-        } else if (skill >= 15) {
-            tree_name = "Oak tree";
-            axe_name = "Black axe";
-            destination = oak_tree_spot;
         } else if (skill >= 11) {
             axe_name = "Black axe";
         }
-        Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ".");
+
+        // set tree
+        if (skill >= 15) {
+            tree_name = "Oak tree";
+            destination = oak_tree_spot;
+        }
+
+        Logger.log("Current axe name: " + axe_name + ". Current tree name: " + tree_name);
     }
 
     @Override
     public int onLoop() {
         if (!Inventory.contains(axe_name)) {
             if (Bank.open()) {
-                Bank.depositAllItems();
                 if (!Bank.withdraw(axe_name)) {
                     Logger.log("Failed to find axe " + axe_name);
                     return -1;
@@ -76,7 +87,14 @@ public class TreeCutter extends AbstractScript {
             }
         } else {
             if (Bank.open()) {
+                updateTreeAndAxe();
                 Bank.depositAllExcept(axe_name);
+                if (Inventory.isEmpty()) {
+                    if (!Bank.withdraw(axe_name)) {
+                        Logger.log("Failed to find axe " + axe_name);
+                        return -1;
+                    }
+                }
                 returned = false;
             }
         }
