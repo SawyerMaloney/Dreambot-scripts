@@ -23,23 +23,35 @@ public class Miner extends AbstractScript {
 
     private String rock_name = "Tin rocks";
     private String pickaxe_name = "Black pickaxe";
+
+    private final Tile tin_rock_tile = new Tile(3223, 3147);
+    private final Tile iron_rock_tile = new Tile(3286, 3368);
+    private Tile destination = tin_rock_tile;
+
     @Override
-    public void onStart(String... params) {
+    public void onStart() {
         Logger.log("Starting script...");
+        setNames();
+        Logger.log("Starting script with pick: " + pickaxe_name + ", ore: " +  rock_name);
     }
 
     @Override
     public int onLoop() {
+        Logger.log("In loop with pick: " + pickaxe_name + ", ore: " +  rock_name);
         if (!Players.getLocal().isAnimating()) {
             if (Inventory.isFull()) {
                 Inventory.dropAllExcept(pickaxe_name);
             }
-            Logger.log("Finding new rock");
-            Sleep.sleep(Calculations.random(200, 1000));
-            GameObject rock = GameObjects.closest(rock_name);
-            if (rock != null && rock.exists() && rock.canReach()) {
-                Logger.log("Rock real, reachable. Interacting.");
-                rock.interact("Mine");
+            if (destination.distance() > 1) {
+                Walking.walk(destination);
+            } else {
+                Logger.log("Finding new rock");
+                Sleep.sleep(Calculations.random(200, 1000));
+                GameObject rock = GameObjects.closest(rock_name);
+                if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2) {
+                    Logger.log("Rock real, reachable. Interacting.");
+                    rock.interact("Mine");
+                }
             }
             return 500 + Calculations.random(0, 500);
         }
@@ -49,5 +61,30 @@ public class Miner extends AbstractScript {
     @Override
     public void onExit() {
         Logger.log("Stopping script...");
+    }
+
+    private void setNames() {
+        int skill = Skills.getRealLevel(Skill.MINING);
+
+        Logger.log("Mining skill: " + skill);
+
+        // set pickaxe name first
+        if (skill > 41) {
+            pickaxe_name = "Rune pickaxe";
+        } else if (skill >= 31) {
+            pickaxe_name = "Adamant pickaxe";
+        } else if (skill >= 21) {
+            pickaxe_name = "Mithril pickaxe";
+        } else if (skill >= 11) {
+            pickaxe_name = "Black pickaxe";
+        }
+
+        // set rock type
+        if (skill < 15) {
+            rock_name = "Tin rocks";
+        } else {
+            rock_name = "Iron rocks";
+            destination = iron_rock_tile;
+        }
     }
 }

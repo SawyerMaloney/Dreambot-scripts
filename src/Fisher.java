@@ -24,7 +24,6 @@ public class Fisher extends AbstractScript {
     private final Tile destination = new Tile(3241, 3149);
     private boolean fishing = false;
     private int inventories = 0;
-    private long lastAnimatingTime = 0;
 
     @Override
     public void onStart(String... params) {
