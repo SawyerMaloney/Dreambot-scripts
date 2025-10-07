@@ -39,21 +39,32 @@ public class Miner extends AbstractScript {
     public int onLoop() {
         Logger.log("In loop with pick: " + pickaxe_name + ", ore: " +  rock_name);
         if (!Players.getLocal().isAnimating()) {
-            if (Inventory.isFull()) {
-                Inventory.dropAllExcept(pickaxe_name);
-            }
-            if (destination.distance() > 1) {
-                Walking.walk(destination);
-            } else {
-                Logger.log("Finding new rock");
-                Sleep.sleep(Calculations.random(200, 1000));
-                GameObject rock = GameObjects.closest(rock_name);
-                if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2) {
-                    Logger.log("Rock real, reachable. Interacting.");
-                    rock.interact("Mine");
+            setNames();
+            if (!Inventory.contains(pickaxe_name)) {
+                if (Bank.open()) {
+                    Bank.depositAllItems();
+                    if (!Bank.withdraw(pickaxe_name)) {
+                        Logger.log("Failed to get pickaxe");
+                        return -1;
+                    }
                 }
+            } else {
+                if (Inventory.isFull()) {
+                    Inventory.dropAllExcept(pickaxe_name);
+                }
+                if (destination.distance() > 1) {
+                    Walking.walk(destination);
+                } else {
+                    Logger.log("Finding new rock");
+                    Sleep.sleep(Calculations.random(200, 1000));
+                    GameObject rock = GameObjects.closest(rock_name);
+                    if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2 && rock.getIndex() != -4503587711215435L) {
+                        Logger.log("Rock real, reachable. Interacting.");
+                        rock.interact("Mine");
+                    }
+                }
+                return 500 + Calculations.random(0, 500);
             }
-            return 500 + Calculations.random(0, 500);
         }
         return 100;
     }
