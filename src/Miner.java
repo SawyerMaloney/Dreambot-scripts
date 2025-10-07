@@ -59,6 +59,8 @@ public class Miner extends TaskNode {
             } else if (status == 1) {  // we have the correct pickaxe; otherwise, we are getting it
                 if (Inventory.isFull()) {
                     Inventory.dropAll("Tin ore", "Iron ore");
+                    inventories += 1;
+                    AIO_Scheduler.inventories += 1;
                 }
                 if (destination.distance() > 1) {
                     Walking.walk(destination);

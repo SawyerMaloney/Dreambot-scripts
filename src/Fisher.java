@@ -107,6 +107,8 @@ public class Fisher extends TaskNode {
             Logger.log("Full inventory. Dropping fish.");
             fishing = false;
             Inventory.dropAll("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon");
+            inventories += 1;
+            AIO_Scheduler.inventories += 1;
             setNames();
         }
         return 500 + Calculations.random(100, 500);
