@@ -61,6 +61,7 @@ public class TreeCutter extends AbstractScript {
     public int onLoop() {
         if (!Inventory.contains(axe_name)) {
             if (Bank.open()) {
+                Bank.depositAllItems();
                 if (!Bank.withdraw(axe_name)) {
                     Logger.log("Failed to find axe " + axe_name);
                     return -1;

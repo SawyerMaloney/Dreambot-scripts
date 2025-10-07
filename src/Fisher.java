@@ -21,21 +21,33 @@ import org.dreambot.api.methods.interactive.Players;
 
 public class Fisher extends AbstractScript {
 
-    private final Tile destination = new Tile(3241, 3149);
+    private final Tile small_net_tile = new Tile(3241, 3149);
+    private final Tile fly_fishing_tile = new Tile(3108, 3433);
+    private Tile destination = small_net_tile;
     private boolean fishing = false;
-    private int inventories = 0;
+    private String rod_name = "Small fishing net";
 
     @Override
-    public void onStart(String... params) {
+    public void onStart() {
         Logger.log("Starting fishing bot...");
+        setNames();
+        Logger.log("Starting script with rod " + rod_name + ".");
     }
 
     @Override
     public int onLoop() {
-        if (inventories >= 5) {
-            return -1;
+        if (!Inventory.contains(rod_name)) {
+            Logger.log("Missing rod.");
+            if (Bank.open()) {
+                Sleep.sleep(Calculations.random(0, 100));
+                Bank.depositAllItems();
+                Sleep.sleep(Calculations.random(0, 100));
+                if (!Bank.withdraw(rod_name)) {
+                    Logger.log("Failed to get rod " + rod_name + ".");
+                    return -1;
+                }
+            }
         }
-
         if (!Inventory.isFull()) {
             if (!Players.getLocal().isAnimating()) {
                 if (destination.distance() > 10 && !fishing) {
@@ -47,6 +59,7 @@ public class Fisher extends AbstractScript {
                     Logger.log("At spot. Looking for fishing spot.");
                     fishing = true;
                     NPC fishing_spot = NPCs.closest("Fishing spot");
+                    Sleep.sleep(Calculations.random(100, 500));
 
                     if (fishing_spot != null && fishing_spot.exists() && fishing_spot.canReach()) {
                         Logger.log("Found fishing spot");
@@ -63,20 +76,24 @@ public class Fisher extends AbstractScript {
                 return 5000;
             }
         } else {
-            Logger.log("Full inventory. Going to bank");
+            Logger.log("Full inventory. Dropping fish.");
             fishing = false;
-            if (Bank.open()) {
-                Sleep.sleep(Calculations.random(200, 2000));
-                Bank.depositAllExcept("Small fishing net");
-                inventories += 1;
-                Logger.log("Deposited. Current number of inventories complete: " + inventories);
-            }
+            Inventory.dropAll("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon");
         }
-        return 500;
+        return 500 + Calculations.random(100, 500);
     }
 
     @Override
     public void onExit() {
         Logger.log("Stopping script...");
+    }
+
+    private void setNames() {
+        int skill = Skills.getRealLevel(Skill.FISHING);
+
+        if (skill >= 20) {
+            rod_name = "Fly fishing rod";
+            destination = fly_fishing_tile;
+        }
     }
 }

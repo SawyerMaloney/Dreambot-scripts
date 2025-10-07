@@ -12,12 +12,10 @@ import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.methods.interactive.GameObjects;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.methods.skills.Skills;
-import org.dreambot.api.methods.interactive.NPCs;
-import org.dreambot.api.wrappers.interactive.NPC;
 import org.dreambot.api.methods.interactive.Players;
 
 @ScriptManifest(name = "Mining Tool", description = "AIO Mining tool.", author = "sawyerdm",
-        version = 1.0, category = Category.MINING, image="")
+        version = 1.0, category = Category.MINING)
 
 public class Miner extends AbstractScript {
 
@@ -27,6 +25,8 @@ public class Miner extends AbstractScript {
     private final Tile tin_rock_tile = new Tile(3223, 3147);
     private final Tile iron_rock_tile = new Tile(3286, 3368);
     private Tile destination = tin_rock_tile;
+
+    private final Tile iron_rock_to_skip = new Tile(3285, 3369);
 
     @Override
     public void onStart() {
@@ -50,7 +50,7 @@ public class Miner extends AbstractScript {
                 }
             } else {
                 if (Inventory.isFull()) {
-                    Inventory.dropAllExcept(pickaxe_name);
+                    Inventory.dropAll("Tin ore", "Iron ore");
                 }
                 if (destination.distance() > 1) {
                     Walking.walk(destination);
@@ -58,7 +58,7 @@ public class Miner extends AbstractScript {
                     Logger.log("Finding new rock");
                     Sleep.sleep(Calculations.random(200, 1000));
                     GameObject rock = GameObjects.closest(rock_name);
-                    if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2 && rock.getIndex() != -4503587711219539L) {
+                    if (rock != null && rock.exists() && rock.canReach() && rock.distance(destination) < 2 && !rock.getTile().equals(iron_rock_to_skip)) {
                         Logger.log("Rock real, reachable. Interacting. Index: " + rock.getIndex());
                         rock.interact("Mine");
                     }
@@ -66,7 +66,7 @@ public class Miner extends AbstractScript {
                 return 500 + Calculations.random(0, 500);
             }
         }
-        return 100;
+        return 500 +  Calculations.random(0, 1000);
     }
 
     @Override
