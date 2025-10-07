@@ -11,17 +11,17 @@ import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.utilities.Sleep;
 
 
-@ScriptManifest(name = "First Script", description = "My First Script's First Description!", author = "sawyerdm",
+@ScriptManifest(name = "Bones collector", description = "Collect bones from Cow pen for easy, no req. money making.", author = "sawyerdm",
                 version = 1.0, category = Category.MONEYMAKING, image="")
 
-public class TestScript extends AbstractScript {
+public class BonesCollector extends AbstractScript {
 
     private final Tile destination = new Tile(3260, 3277);
     private boolean collecting = false;
 
     @Override
     public void onStart() {
-        Logger.log("F2P Bone and cowhide collector!");
+        Logger.log("F2P Bone collector!");
     }
 
     @Override
@@ -37,7 +37,7 @@ public class TestScript extends AbstractScript {
                 }
             } else {
                 collecting = true;
-                GroundItem item = GroundItems.closest("Coins", "Cowhide", "Bones");
+                GroundItem item = GroundItems.closest("Coins", "Bones");
                 if (item != null && item.exists()) {
                     Logger.log("Found item " + item.getName());
                     item.interact("Take");
