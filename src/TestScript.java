@@ -17,8 +17,7 @@ import org.dreambot.api.utilities.Sleep;
 public class TestScript extends AbstractScript {
 
     private final Tile destination = new Tile(3260, 3277);
-    private boolean needs_bank = false;
-    private boolean walking_back = false;
+    private boolean collecting = false;
 
     @Override
     public void onStart() {
@@ -28,10 +27,16 @@ public class TestScript extends AbstractScript {
     @Override
     public int onLoop() {
         if (!Inventory.isFull()) {
-            if (destination.distance() > 10 && Walking.shouldWalk()) {
-                Logger.log("Walking back.");
-                Walking.walk(destination);
+            Logger.log("Inventory not full. Distance: " + destination.distance() + ". shouldWalk: " + Walking.shouldWalk() + ". collecting: " + collecting);
+            if (destination.distance() > 5 && !collecting) {
+                if (Walking.shouldWalk()) {
+                    Logger.log("Walking back.");
+                    Walking.walk(destination);
+                } else {
+                    Logger.log("Shouldn't walk. Waiting...");
+                }
             } else {
+                collecting = true;
                 GroundItem item = GroundItems.closest("Coins", "Cowhide", "Bones");
                 if (item != null && item.exists()) {
                     Logger.log("Found item " + item.getName());
@@ -46,6 +51,8 @@ public class TestScript extends AbstractScript {
             if (Bank.open()) {
                 Logger.log("Bank is open.");
                 Bank.depositAllItems();
+                Logger.log("Deposited all items.");
+                collecting = false;
             }
         }
         return 1000;
