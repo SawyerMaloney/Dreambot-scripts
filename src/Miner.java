@@ -30,8 +30,8 @@ public class Miner extends TaskNode {
 
     private final Tile iron_rock_to_skip = new Tile(3285, 3369);
 
-    public int inventories = 0;
-    public int inventory_limit = 3;
+    public static int inventories = 0;
+    public static int inventory_limit = 3;
 
     private void initialize() {
         Logger.log("Starting script...");

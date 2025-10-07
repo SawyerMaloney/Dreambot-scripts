@@ -4,6 +4,7 @@ import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
+import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.walking.impl.Walking;
@@ -14,10 +15,9 @@ import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.wrappers.interactive.NPC;
 import org.dreambot.api.methods.interactive.Players;
 
-@ScriptManifest(name = "Fishing Tool", description = "AIO Fishing tool.", author = "sawyerdm",
-        version = 1.0, category = Category.FISHING)
 
-public class Fisher extends AbstractScript {
+public class Fisher extends TaskNode {
+    private boolean initalized = false;
 
     private final Tile small_net_tile = new Tile(3241, 3149);
     private final Tile fly_fishing_tile = new Tile(3108, 3433);
@@ -28,32 +28,63 @@ public class Fisher extends AbstractScript {
     private String interact = "Net";
     private String fishing_spot_name = "Fishing spot";
 
-    @Override
-    public void onStart() {
+    public static int inventories = 0;
+    public static int inventory_limit = 3;
+
+    private void initialize() {
         Logger.log("Starting fishing bot...");
         setNames();
         Logger.log("Starting script with rod " + rod_name + " and feathers " + feathers + ".");
+        initalized = true;
+    }
+    @Override
+    public boolean accept() {
+        return inventories < inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
+    }
+
+    private int retrieveRod() {
+        if (Bank.open()) {
+            Sleep.sleep(Calculations.random(0, 100));
+            Bank.depositAllItems();
+            Sleep.sleep(Calculations.random(500, 1000));
+            if (!Bank.withdraw(rod_name)) {
+                Logger.log("Failed to get rod " + rod_name + ".");
+                return -1;
+            }
+            if (feathers) {
+                if (!Bank.withdrawAll("Feather")) {
+                    Logger.log("Failed to get feathers");
+                    return -1;
+                }
+            }
+        }
+        return 500 + Calculations.random(100, 300);
+    }
+
+    private void fish() {
+        Logger.log("At spot. Looking for fishing spot.");
+        fishing = true;
+        NPC fishing_spot = NPCs.closest(fishing_spot_name);
+        Sleep.sleep(Calculations.random(100, 500));
+
+        if (fishing_spot != null && fishing_spot.exists() && fishing_spot.canReach()) {
+            Logger.log("Found fishing spot");
+            fishing_spot.interact(interact);
+            Sleep.sleepUntil(() -> Players.getLocal().isAnimating(), 5000);
+        } else {
+            Logger.log("No fishing spot found.");
+            fishing = false;
+        }
     }
 
     @Override
-    public int onLoop() {
+    public int execute() {
+        if (!initalized) {
+            initialize();
+        }
         if (!Inventory.contains(rod_name) || (feathers && !Inventory.contains("Feather"))) {
             Logger.log("Missing rod or feathers.");
-            if (Bank.open()) {
-                Sleep.sleep(Calculations.random(0, 100));
-                Bank.depositAllItems();
-                Sleep.sleep(Calculations.random(500, 1000));
-                if (!Bank.withdraw(rod_name)) {
-                    Logger.log("Failed to get rod " + rod_name + ".");
-                    return -1;
-                }
-                if (feathers) {
-                    if (!Bank.withdrawAll("Feather")) {
-                        Logger.log("Failed to get feathers");
-                        return -1;
-                    }
-                }
-            }
+            return retrieveRod();
         }
         else if (!Inventory.isFull()) {
             if (!Players.getLocal().isAnimating()) {
@@ -65,19 +96,7 @@ public class Fisher extends AbstractScript {
                         Logger.log("Shouldn't walk. Waiting...");
                     }
                 } else {
-                    Logger.log("At spot. Looking for fishing spot.");
-                    fishing = true;
-                    NPC fishing_spot = NPCs.closest(fishing_spot_name);
-                    Sleep.sleep(Calculations.random(100, 500));
-
-                    if (fishing_spot != null && fishing_spot.exists() && fishing_spot.canReach()) {
-                        Logger.log("Found fishing spot");
-                        fishing_spot.interact(interact);
-                        Sleep.sleepUntil(() -> Players.getLocal().isAnimating(), 5000);
-                    } else {
-                        Logger.log("No fishing spot found.");
-                        fishing = false;
-                    }
+                    fish();
                 }
             }
             else {
@@ -93,11 +112,6 @@ public class Fisher extends AbstractScript {
         return 500 + Calculations.random(100, 500);
     }
 
-    @Override
-    public void onExit() {
-        Logger.log("Stopping script...");
-    }
-
     private void setNames() {
         int skill = Skills.getRealLevel(Skill.FISHING);
 
@@ -109,4 +123,6 @@ public class Fisher extends AbstractScript {
             interact = "Lure";
         }
     }
+
+
 }

@@ -26,6 +26,6 @@ public class AIO_Scheduler extends TaskScript {
     @Override
     public void onStart() {
         Logger.log("Scheduler starting.");
-        addNodes(new Miner(), new TreeCutter());
+        addNodes(new Fisher(), new Miner(), new TreeCutter());
     }
 }
