@@ -12,7 +12,7 @@ import org.dreambot.api.utilities.Sleep;
 
 
 @ScriptManifest(name = "First Script", description = "My First Script's First Description!", author = "sawyerdm",
-                version = 1.0, category = Category.WOODCUTTING, image="")
+                version = 1.0, category = Category.MONEYMAKING, image="")
 
 public class TestScript extends AbstractScript {
 
