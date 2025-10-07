@@ -9,15 +9,13 @@ import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.utilities.Sleep;
-import org.dreambot.api.methods.interactive.GameObjects;
-import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.wrappers.interactive.NPC;
 import org.dreambot.api.methods.interactive.Players;
 
 @ScriptManifest(name = "Fishing Tool", description = "AIO Fishing tool.", author = "sawyerdm",
-        version = 1.0, category = Category.FISHING, image="")
+        version = 1.0, category = Category.FISHING)
 
 public class Fisher extends AbstractScript {
 

@@ -14,7 +14,7 @@ import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.methods.skills.Skills;
 
 @ScriptManifest(name = "Woodcutter", description = "Woodcutting script.", author = "sawyerdm",
-        version = 1.0, category = Category.WOODCUTTING, image="")
+        version = 1.0, category = Category.WOODCUTTING)
 
 
 public class TreeCutter extends AbstractScript {
