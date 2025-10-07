@@ -1,3 +1,4 @@
+import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.AbstractScript;
@@ -77,6 +78,7 @@ public class TreeCutter extends AbstractScript {
                 GameObject tree = GameObjects.closest(tree_name);
 
                 if (tree != null && tree.exists() && tree.isOnScreen()) {
+                    Sleep.sleep(Calculations.random(200, 2000));
                     Logger.log("Found  tree at: " + tree.getTile());
                     tree.interact("Chop down");
                     Sleep.sleepUntil(() -> !tree.exists(), 5000);
@@ -89,6 +91,7 @@ public class TreeCutter extends AbstractScript {
             if (Bank.open()) {
                 updateTreeAndAxe();
                 Bank.depositAllExcept(axe_name);
+                Sleep.sleep(Calculations.random(200, 2000));
                 if (Inventory.isEmpty()) {
                     if (!Bank.withdraw(axe_name)) {
                         Logger.log("Failed to find axe " + axe_name);
