@@ -43,7 +43,6 @@ public class Miner extends TaskNode {
         if (!initialized) {
             initialize();
         }
-        Logger.log("In loop with pick: " + pickaxe_name + ", ore: " +  rock_name);
         if (!Players.getLocal().isAnimating()) {
             setNames();
             int status = ensureCorrectPick();
@@ -70,6 +69,7 @@ public class Miner extends TaskNode {
                 Bank.depositAllItems();
                 Sleep.sleep(Calculations.random(500, 1000));
                 Sleep.sleepUntil(() -> Bank.withdraw(pickaxe_name), 5000);
+                Sleep.sleep(Calculations.random(1500));
                 if (!Inventory.contains(pickaxe_name)) {
                     Logger.log("Failed to get pickaxe");
                     return -1;

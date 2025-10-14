@@ -32,6 +32,7 @@ public class TreeCutter extends TaskNode {
         if (Bank.open()) {
             Bank.depositAllItems();
             Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 5000);
+            Sleep.sleep(Calculations.random(300, 500));
             if (!Inventory.contains(axe_name)) {
                 Logger.log("Failed to find axe " + axe_name);
                 return -1;
@@ -109,6 +110,10 @@ public class TreeCutter extends TaskNode {
     }
 
     private void updateTreeAndAxe() {
+        if (AIO_Scheduler.axe_name != null) {
+            axe_name = AIO_Scheduler.axe_name;
+
+        }
         int skill = Skills.getRealLevel(Skill.WOODCUTTING);
 
         // set axe

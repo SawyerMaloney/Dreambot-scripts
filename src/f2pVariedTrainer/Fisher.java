@@ -44,6 +44,7 @@ public class Fisher extends TaskNode {
             Bank.depositAllExcept("Feather", rod_name);
             Sleep.sleep(Calculations.random(500, 1000));
             Sleep.sleepUntil(() -> Bank.withdraw(rod_name), 5000);
+            Sleep.sleep(Calculations.random(300, 500));
             if (!Inventory.contains(rod_name)) {
                 Logger.log("Failed to get rod " + rod_name);
                 return -1;
@@ -51,6 +52,7 @@ public class Fisher extends TaskNode {
             Sleep.sleep(Calculations.random(500, 1000));
             if (feathers) {
                 Sleep.sleepUntil(() -> Bank.withdrawAll("Feather"), 5000);
+                Sleep.sleep(1000);
                 if (!Inventory.contains("Feather")) {
                     Logger.log("Failed to get feathers");
                     return -1;
