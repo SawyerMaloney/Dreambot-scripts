@@ -32,7 +32,7 @@ public class TreeCutter extends TaskNode {
         if (Bank.open()) {
             Bank.depositAllItems();
             Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 5000);
-            Sleep.sleep(Calculations.random(300, 500));
+            Sleep.sleep(Calculations.random(1000, 1500));
             if (!Inventory.contains(axe_name)) {
                 Logger.log("Failed to find axe " + axe_name);
                 return -1;

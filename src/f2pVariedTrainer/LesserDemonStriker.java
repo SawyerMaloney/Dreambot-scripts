@@ -1,21 +1,21 @@
 package f2pVariedTrainer;
 
 import org.dreambot.api.methods.Calculations;
-import org.dreambot.api.methods.container.impl.bank.Bank;
+import org.dreambot.api.methods.item.GroundItems;
 import org.dreambot.api.methods.magic.Magic;
 import org.dreambot.api.methods.magic.Normal;
-import org.dreambot.api.methods.magic.Spell;
-import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
-import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.utilities.Sleep;
-import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.wrappers.interactive.NPC;
 import org.dreambot.api.methods.interactive.Players;
+import org.dreambot.api.wrappers.items.GroundItem;
+import org.dreambot.api.methods.grandexchange.LivePrices;
+
+import java.util.List;
 
 public class LesserDemonStriker extends TaskNode {
 
@@ -39,7 +39,10 @@ public class LesserDemonStriker extends TaskNode {
                 if (Magic.canCast(Normal.FIRE_STRIKE)) {
                     Logger.log("Found lesser demon.");
                     lesser_demon.interact("Attack");
-                    Sleep.sleepUntil(() -> !Players.getLocal().isAnimating(), 5000);
+                    Sleep.sleepUntil(() -> !Players.getLocal().isInCombat(), 30000);
+                    // check if drops--if valuable, pick up
+                    Sleep.sleep(Calculations.random(1000, 1500));
+                    getDrops();
                     return 1000;
                 } else {
                     Logger.log("Cannot cast spell.");
@@ -52,5 +55,17 @@ public class LesserDemonStriker extends TaskNode {
             return 500;
         }
         return 1000;
+    }
+
+    private void getDrops() {
+        List<GroundItem> ground_items = GroundItems.all();
+        Logger.log("Starting getDrops with " + ground_items.size() + " items.");
+        for (GroundItem ground_item : ground_items) {
+            Logger.log("Checking item " +  ground_item.getName() + " with live price " + LivePrices.get(ground_item.getName()) + " and amount " + ground_item.getAmount());
+            if (LivePrices.get(ground_item.getName()) * ground_item.getAmount() > LivePrices.get("Law rune")) {
+                Logger.log("Casting spell on item " + ground_item.getName() + ".");
+                Magic.castSpellOn(Normal.TELEKINETIC_GRAB, ground_item);
+            }
+        }
     }
 }
