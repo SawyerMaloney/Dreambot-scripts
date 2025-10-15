@@ -13,13 +13,13 @@ import org.dreambot.api.utilities.Logger;
 public class AIO_Scheduler extends TaskScript {
 
     public static int inventories = 0;
-    public static int inventory_limit = 50;
+    public static int inventory_limit = 1;
 
     public static int fisher_inv = 0;
     public static int miner_inv = 0;
     public static int tree_inv = 0;
 
-    public static final int individual_inventory_limit = 20;
+    public static final int individual_inventory_limit = 1;
 
     public static boolean canCast = true;
 
@@ -30,11 +30,17 @@ public class AIO_Scheduler extends TaskScript {
     public void onStart() {
         Logger.log("Scheduler starting.");
         addNodes(new TreeCutter());
+        setFailLimit(3);
     }
 
     @Override
     public void onExit() {
-        Client.logout();
+        Logger.log("Script ended");
+
+        // if script reached its endpoint (not stopped by user)
+        if (inventories == inventory_limit) {
+            Client.logout();
+        }
     }
 
     public static void updateInventories(int task) {
