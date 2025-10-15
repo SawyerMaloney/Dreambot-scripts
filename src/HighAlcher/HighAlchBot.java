@@ -26,32 +26,22 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @ScriptManifest(name = "HighAlcher", description = "Smart High/low Alch bot to find profitable alchs, buy them on the GE, and then alch them.",
         author = "sawyerm",
         version = 1.0, category = Category.MAGIC)
 
 public class HighAlchBot extends AbstractScript {
-
-    Map<Integer, String> items = new HashMap<>();
-    List<Integer> alchables = new ArrayList<>();
-    List<TradingAlchs> chosenAlchables = new ArrayList<>();
-    private final Tile varrockBank = new Tile(3164, 3487);
-    int goldAmount = 0;
-
     // manifest flags/values
     final boolean lowAlch = true;
     final boolean members = false;
     final int openTradingSlots = 3;
     final int maxGoldUsage = 0;
-    private final int staffOfFireID = 1387;
-    private final int natureRuneID = 561;
-    private final int fireRuneID = 554;
-    private boolean onlyAlch = true; // skip buying--assume has runes and staff, just alch all non-runes
+    final boolean onlyAlch = true;
+    final int staffOfFireID = 1387;
+    final int natureRuneID = 561;
 
     private Timer minuteTimer;
 
@@ -60,7 +50,18 @@ public class HighAlchBot extends AbstractScript {
     private boolean arrived = false;
     private boolean chooseItems = true;
     private boolean buyItems = true;
-    private boolean hasFireStaff = false;
+    private boolean buyNatureRunes = false;
+    private boolean buyOrderPlacedNatureRunes = false;
+
+    Map<Integer, String> items = new HashMap<>();
+    List<Integer> alchables = new ArrayList<>();
+    List<TradingAlchs> chosenAlchables = new ArrayList<>();
+    private final Tile varrockBank = new Tile(3164, 3487);
+    int goldAmount = 0;
+    Item natureRune = new Item(natureRuneID, 1);
+    int natureRunesNeeded = 0;
+    int currentNatureRunes = 0;
+
 
 
     @Override
@@ -82,6 +83,8 @@ public class HighAlchBot extends AbstractScript {
             minuteTimer.reset();
         }
 
+        // skip buying--assume has runes and staff, just alch all non-runes
+
         if (onlyAlch) {
             return alch();
         } else {
@@ -89,29 +92,94 @@ public class HighAlchBot extends AbstractScript {
                 return setup();
             } else if (chooseItems) {
                 return chooseItems();
+            } else if (buyNatureRunes) {
+                return buyNatureRunes();
             } else if (buyItems) {
                 return buyItems();
             } else {
-                Logger.log("End of script");
-                return -1;
+                List<Item> items = getInventoryAlchables();
+                if (items != null && !items.isEmpty()) {
+                    return alch(items);
+                } else {
+                    return claimItems();
+                }
             }
         }
     }
 
+    private int claimItems() {
+        Sleep.sleepUntil(GrandExchange::isReadyToCollect, 15000);
+        if (GrandExchange.isReadyToCollect()) {
+            if (GrandExchange.open()) {
+                GrandExchange.collect();
+            }
+        } else {
+            Logger.log("GE not ready to collect yet.");
+        }
+        return 500;
+    }
+
+    private List<Item> getInventoryAlchables() {
+        return Inventory.all().stream()
+                .filter(Objects::nonNull)
+                .filter(item -> !item.getName().equals("Nature rune"))
+                .filter(item -> !item.getName().equals("Fire rune"))
+                .filter(item -> !item.getName().equals("Coins"))
+                .collect(Collectors.toList());
+    }
+
     private int alch() {
+        List<Item> items = getInventoryAlchables();
+        return alch(items);
+    }
+
+    private int alch(List<Item> items) {
+
         Normal alchSpell = Normal.HIGH_LEVEL_ALCHEMY;
         if (lowAlch) alchSpell = Normal.LOW_LEVEL_ALCHEMY;
 
-        List<Item> items = Inventory.all();
+        if (items.isEmpty()) {
+            Logger.log("Finished high alching.");
+            return -1;
+        }
+
         for (Item item : items) {
-            if (Magic.canCast(alchSpell)) {
-                Logger.log("Casting " + alchSpell.toString() + " on " + item.toString());
-                Magic.castSpellOn(alchSpell, item);
-                Sleep.sleepUntil(() -> Players.getLocal().isAnimating(), 1500);
-                Sleep.sleep(Calculations.random(100, 300));
-            } else {
-                Logger.log("Cannot cast spell.");
-                return -1;
+            for (int i = 0; i < item.getAmount(); i++) {
+                if (Magic.canCast(alchSpell)) {
+                    Logger.log("Casting " + alchSpell.toString() + " on " + item.getName());
+                    Magic.castSpellOn(alchSpell, item);
+                    Sleep.sleepUntil(() -> !Players.getLocal().isAnimating(), () -> false,5000, 50, 10);
+                    Sleep.sleep(Calculations.random(100, 300));
+                } else {
+                    Logger.log("Cannot cast spell.");
+                    return -1;
+                }
+            }
+        }
+        return 1000;
+    }
+
+    private int buyNatureRunes() {
+        Logger.log("Buying nature runes.");
+        if (GrandExchange.open()) {
+            if (!buyOrderPlacedNatureRunes) {
+                GrandExchange.buyItem(natureRuneID, natureRunesNeeded, natureRune.getLivePrice());
+                buyOrderPlacedNatureRunes = true;
+            }
+            Sleep.sleepUntil(GrandExchange::isReadyToCollect, 5000);
+            if (GrandExchange.isReadyToCollect()) {
+                GrandExchange.collect();
+                Sleep.sleep(Calculations.random(1000, 1500));
+                Item natureRunesInventory = Inventory.get("Nature rune");
+                if (natureRunesInventory == null) {
+                    Logger.log("In buyNatureRunes, failed to get nature runes.");
+                    return -1;
+                }
+                natureRunesNeeded -= natureRunesInventory.getAmount() - currentNatureRunes;
+                currentNatureRunes = natureRunesInventory.getAmount();
+                if (natureRunesNeeded == 0) {
+                    buyNatureRunes = false;
+                }
             }
         }
         return 1000;
@@ -127,7 +195,6 @@ public class HighAlchBot extends AbstractScript {
             }
 
             buyItems = false;
-            Sleep.sleepUntil(GrandExchange::isReadyToCollect, 15000);
             return 1000;
         } else {
             return 500;
@@ -135,7 +202,12 @@ public class HighAlchBot extends AbstractScript {
     }
 
     private int chooseItems() {
-        for (int id : alchables.subList(0, openTradingSlots)) {
+        int numItemsToSelect = openTradingSlots;
+        if (openTradingSlots > alchables.size()) {
+            numItemsToSelect = alchables.size();
+        }
+        Logger.log("Choosing " + numItemsToSelect + " items to alch.");
+        for (int id : alchables.subList(0, numItemsToSelect)) {
             Item item = new Item(id, 1);
             TradingAlchs ta = new TradingAlchs(id, 0, 0, item.getLivePrice(), item.getName());
             int amtToBuy = (goldAmount / openTradingSlots) / ta.getLivePrice();
@@ -144,7 +216,34 @@ public class HighAlchBot extends AbstractScript {
             chosenAlchables.add(ta);
         }
         chooseItems = false;
+        calculateNatureRunes();
         return 1000;
+    }
+
+    // figure out how many nature runes we'll need and subtract their cost from the items
+    private void calculateNatureRunes() {
+        int totalCost = 0;
+        int totalCasts = 0;
+
+        for (TradingAlchs ta : chosenAlchables) {
+            totalCost += ta.getLivePrice() * ta.getAmtToBuy();
+            totalCasts += ta.getAmtToBuy();
+        }
+        int leftover = goldAmount - totalCost;
+        if (totalCasts < currentNatureRunes) {
+            Logger.log("Already have enough Nature runes.");
+            return;
+        } else {
+            buyNatureRunes = true;
+            // calculate how many nature runes we need, subtracting the amount from the rest of the items
+            natureRunesNeeded = totalCasts - currentNatureRunes;
+            int runesCost = natureRunesNeeded * natureRune.getLivePrice();
+            for (TradingAlchs ta : chosenAlchables) {
+                int amtToBuy = ta.getAmtToBuy();
+                amtToBuy -= (runesCost / chosenAlchables.size()) / ta.getLivePrice();
+                ta.setAmtToBuy(amtToBuy);
+            }
+        }
     }
 
     // Get to Varrock GE, empty inventory and get amount of gold
@@ -181,11 +280,19 @@ public class HighAlchBot extends AbstractScript {
                 } else Logger.log("Has Staff of fire equipped.");
                 Sleep.sleep(Calculations.random(1000, 1500));
                 if (Bank.contains("Nature rune")) {
-                    Bank.withdraw("Nature rune");
+                    Bank.withdrawAll("Nature rune");
                 } else {
-                    Logger.log("Failed to find Nature rune.");
+                    Logger.log("Failed to find Nature rune from bank.");
                 }
-                Logger.log("Exiting setup with " + goldAmount + " gp.");
+                Sleep.sleep(Calculations.random(1000, 1500));
+                Item nrItem = Inventory.get("Nature rune");
+                if (nrItem == null) {
+                    Logger.log("Failed to get nature runes from inventory.");
+                } else {
+                    currentNatureRunes += nrItem.getAmount();
+                }
+
+                Logger.log("Exiting setup with " + goldAmount + " gp and " + currentNatureRunes + " nature runes.");
                 setup = false;
             }
         }
