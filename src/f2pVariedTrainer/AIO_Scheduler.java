@@ -13,13 +13,13 @@ import org.dreambot.api.utilities.Logger;
 public class AIO_Scheduler extends TaskScript {
 
     public static int inventories = 0;
-    public static int inventory_limit = 20;
+    public static int inventory_limit = 50;
 
     public static int fisher_inv = 0;
     public static int miner_inv = 0;
     public static int tree_inv = 0;
 
-    public static final int individual_inventory_limit = 20;
+    public static final int individual_inventory_limit = 50;
 
     public static boolean canCast = true;
 

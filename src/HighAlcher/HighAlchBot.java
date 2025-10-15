@@ -39,7 +39,7 @@ public class HighAlchBot extends AbstractScript {
     final boolean members = false;
     final int openTradingSlots = 3;
     final int maxGoldUsage = 0;
-    final boolean onlyAlch = true;
+    final boolean onlyAlch = false;
     final int staffOfFireID = 1387;
     final int natureRuneID = 561;
 
@@ -134,7 +134,10 @@ public class HighAlchBot extends AbstractScript {
     }
 
     private int alch(List<Item> items) {
-
+        if (GrandExchange.isOpen()) {
+            GrandExchange.close();
+        }
+        Sleep.sleep(Calculations.random(1000, 1500));
         Normal alchSpell = Normal.HIGH_LEVEL_ALCHEMY;
         if (lowAlch) alchSpell = Normal.LOW_LEVEL_ALCHEMY;
 
