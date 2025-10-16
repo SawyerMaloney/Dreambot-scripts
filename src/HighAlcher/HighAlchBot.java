@@ -1,4 +1,9 @@
 package HighAlcher;
+/*
+*   TODO timer for buying multiple times
+*   TODO organize by most profitable TAs
+*   TODO not buying enough of some items--still has plenty of gold left over
+* */
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
@@ -40,6 +45,8 @@ public class HighAlchBot extends AbstractScript {
     final int openTradingSlots = 3;
     final int maxGoldUsage = 0;
     final boolean onlyAlch = false;
+    final int volumeCutOff = 250;  // hourly
+
     final int staffOfFireID = 1387;
     final int natureRuneID = 561;
 
@@ -53,14 +60,16 @@ public class HighAlchBot extends AbstractScript {
     private boolean buyNatureRunes = false;
     private boolean buyOrderPlacedNatureRunes = false;
 
+    private final Tile varrockBank = new Tile(3164, 3487);
+    private final Item natureRune = new Item(natureRuneID, 1);
+
     List<TradingAlchs> items = new ArrayList<>();
     List<TradingAlchs> alchables = new ArrayList<>();
     List<TradingAlchs> chosenAlchables = new ArrayList<>();
     List<Transaction> transactions = new ArrayList<>();
     Map<String, Integer> previousTradesByName = new HashMap<>();
-    private final Tile varrockBank = new Tile(3164, 3487);
+
     int goldAmount = 0;
-    Item natureRune = new Item(natureRuneID, 1);
     int natureRunesNeeded = 0;
     int currentNatureRunes = 0;
 
@@ -71,6 +80,7 @@ public class HighAlchBot extends AbstractScript {
 
         try {
             getItemIds();
+            getItemVolumes();
             findAlchables();
             transactions = TransactionsHelper.loadTransactions();
             getPreviousTrades();
@@ -111,8 +121,7 @@ public class HighAlchBot extends AbstractScript {
     }
 
     private int claimItems() {
-        Logger.log("Entering claimItems. Sleeping until GE is ready to collect.");
-        Sleep.sleepUntil(GrandExchange::isReadyToCollect, 15000);
+        Logger.log("Entering claimItems. tryCollect'ing.");
         if (tryCollect()) {
             Logger.log("GrandExchange items ready.");
             updateAlchables();
@@ -126,9 +135,10 @@ public class HighAlchBot extends AbstractScript {
         for (Item item : getInventoryAlchables()) {
             for (TradingAlchs ta : chosenAlchables) {
                 if (ta.getItemName().equals(item.getName())) {
+                    // update TA with bought amount and logging a transaction
+                    Logger.log("Logging transaction for " + ta.getItemName() + " for amount " + item.getAmount() + ".");
                     ta.setAmtBought(ta.getAmtBought() + item.getAmount());
-                    // TODO not perfect way to get live price here
-                    Transaction trans = new Transaction(ta.getItemName(), item.getAmount(), item.getLivePrice());
+                    Transaction trans = new Transaction(ta.getItemName(), item.getAmount(), ta.getLivePrice());
                     transactions.add(trans);
                 }
             }
@@ -182,7 +192,9 @@ public class HighAlchBot extends AbstractScript {
     // collect from the GE, then see if we got any alchables
     private boolean tryCollect() {
         if (GrandExchange.isOpen()) {
+            Logger.log("GE is open. Collecting, then sleeping...");
             GrandExchange.collect();
+            Sleep.sleep(1500);
             return !getInventoryAlchables().isEmpty();
         } else {
             Logger.log("GE not open. Sleeping until open.");
@@ -247,14 +259,21 @@ public class HighAlchBot extends AbstractScript {
         int numItemsToSelect = Math.min(openTradingSlots, alchables.size());
         Logger.log("Choosing " + numItemsToSelect + " items to alch.");
         int i = 0;
-        while (i < alchables.size() || (chosenAlchables.size() < numItemsToSelect)) {
+        while (i < alchables.size() && (chosenAlchables.size() < numItemsToSelect)) {
             TradingAlchs ta = alchables.get(i);
-            // skips item if it isn't at the buy limit
+            // skips item if it isn't at the buy limit; get amount to buy (limit or amount we can afford), then update goldAmount
             if (previousTradesByName.containsKey(ta.getItemName()) && previousTradesByName.get(ta.getItemName()) < ta.getLimit()) {
+                int amtToBuy = goldAmount / ta.getLivePrice();
+                ta.setAmtToBuy(Math.min(amtToBuy, ta.getLimit() - previousTradesByName.get(ta.getItemName())));  // ensure buying limit is not exceeded
+                Logger.log("Adding: " + ta.toString());
+                goldAmount -= ta.getAmtToBuy() * ta.getLivePrice();
+                chosenAlchables.add(ta);
+            } else {
                 int amtToBuy = (goldAmount / openTradingSlots) / ta.getLivePrice();
                 ta.setAmtToBuy(Math.min(amtToBuy, ta.getLimit()));  // ensure buying limit is not exceeded
                 Logger.log("Adding: " + ta.toString());
                 chosenAlchables.add(ta);
+
             }
             i++;
         }
@@ -355,8 +374,11 @@ public class HighAlchBot extends AbstractScript {
             int alchValue = highAlchValue;
             if (lowAlch) alchValue = lowAlchValue;
             if (alchValue > LivePrices.get(ta.getId()) + nature_rune_price)  {
-                if (!item.isMembersOnly() || members) {
-                    alchables.add(ta);
+                int totalVolume = ta.getLowVolume() + ta.getHighVolume();
+                if (totalVolume > volumeCutOff) {
+                    if (!item.isMembersOnly() || members) {
+                        alchables.add(ta);
+                    }
                 }
             }
         }
@@ -401,6 +423,50 @@ public class HighAlchBot extends AbstractScript {
             this.items.add(ta);
         }
     }
+
+    private  void getItemVolumes() throws Exception {
+        // Connect to the 1h endpoint
+        URL url = new URL("https://prices.runescape.wiki/api/v1/osrs/1h");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("User-Agent", "item tracker");
+
+        // Read the response
+        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = in.readLine()) != null) sb.append(line);
+        in.close();
+
+        // Parse JSON
+        JSONObject root = new JSONObject(sb.toString());
+        JSONObject data = root.getJSONObject("data");
+
+        // Iterate over item IDs
+        Iterator<String> keys = data.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            int id = Integer.parseInt(key);
+            JSONObject item = data.getJSONObject(key);
+
+            // Pull hourly trade volume data
+            int highVolume = item.optInt("highPriceVolume", 0);
+            int lowVolume = item.optInt("lowPriceVolume", 0);
+            int totalVolume = highVolume + lowVolume;
+            TradingAlchs ta = findById(id);
+            if (ta != null) {
+                ta.setHighVolume(highVolume);
+                ta.setLowVolume(lowVolume);
+            }
+        }
+    }
+    private TradingAlchs findById(int id) {
+        for (TradingAlchs ta : items) {
+            if (ta.getId() == id) {
+                return ta;
+            }
+        }
+        return null;
+    }
 }
 
 class TradingAlchs {
@@ -410,6 +476,8 @@ class TradingAlchs {
     private int livePrice;
     private String itemName;
     private int limit;
+    private int highVolume;
+    private int lowVolume;
 
     public TradingAlchs(int id, String itemName, int amtToBuy, int amtBought, int livePrice, int limit) {
         this.id = id;
@@ -420,6 +488,22 @@ class TradingAlchs {
         this.limit = limit;
     }
 
+    public int getHighVolume() {
+        return highVolume;
+    }
+
+    public void setHighVolume(int highVolume) {
+        this.highVolume = highVolume;
+    }
+
+    public int getLowVolume() {
+        return lowVolume;
+    }
+
+    public void setLowVolume(int lowVolume) {
+        this.lowVolume = lowVolume;
+    }
+    
     public int getLimit() {
         return limit;
     }
@@ -503,7 +587,7 @@ class TransactionsHelper {
     }
 }
 
-class Transaction {
+class Transaction implements Serializable {
     private final String itemName;
     private final int quantity;
     private final int price;
