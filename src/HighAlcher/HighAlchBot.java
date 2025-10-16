@@ -19,11 +19,12 @@ import org.dreambot.api.utilities.Timer;
 import org.dreambot.api.wrappers.items.Item;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.Serializable;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,6 +56,8 @@ public class HighAlchBot extends AbstractScript {
     List<TradingAlchs> items = new ArrayList<>();
     List<TradingAlchs> alchables = new ArrayList<>();
     List<TradingAlchs> chosenAlchables = new ArrayList<>();
+    List<Transaction> transactions = new ArrayList<>();
+    Map<String, Integer> previousTradesByName = new HashMap<>();
     private final Tile varrockBank = new Tile(3164, 3487);
     int goldAmount = 0;
     Item natureRune = new Item(natureRuneID, 1);
@@ -69,10 +72,18 @@ public class HighAlchBot extends AbstractScript {
         try {
             getItemIds();
             findAlchables();
+            transactions = TransactionsHelper.loadTransactions();
+            getPreviousTrades();
         } catch (Exception e) {
             Logger.log("Failed to get item ids from server.");
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void onExit() {
+        Logger.log("Exiting HighAlcher.");
+        TransactionsHelper.saveTransactions(transactions);
     }
 
     @Override
@@ -116,6 +127,9 @@ public class HighAlchBot extends AbstractScript {
             for (TradingAlchs ta : chosenAlchables) {
                 if (ta.getItemName().equals(item.getName())) {
                     ta.setAmtBought(ta.getAmtBought() + item.getAmount());
+                    // TODO not perfect way to get live price here
+                    Transaction trans = new Transaction(ta.getItemName(), item.getAmount(), item.getLivePrice());
+                    transactions.add(trans);
                 }
             }
         }
@@ -181,9 +195,10 @@ public class HighAlchBot extends AbstractScript {
 
     private int buyNatureRunes() {
         Logger.log("Buying nature runes.");
+        int natureRunePrice = natureRune.getLivePrice();
         if (GrandExchange.open()) {
             if (!buyOrderPlacedNatureRunes) {
-                GrandExchange.buyItem(natureRuneID, natureRunesNeeded, natureRune.getLivePrice());
+                GrandExchange.buyItem(natureRuneID, natureRunesNeeded, natureRunePrice);
                 buyOrderPlacedNatureRunes = true;
                 natureRuneTimer = new Timer(60_000);
             }
@@ -201,6 +216,8 @@ public class HighAlchBot extends AbstractScript {
                 if (natureRunesNeeded == 0) {
                     buyNatureRunes = false;
                 }
+                Transaction trans = new Transaction("Nature rune", natureRunesInventory.getAmount(), natureRunePrice);
+                transactions.add(trans);
             } else if (natureRuneTimer.finished()) {
                 Logger.log("Timed out on buying nature runes.");
                 GrandExchange.cancelAll();
@@ -229,11 +246,17 @@ public class HighAlchBot extends AbstractScript {
     private int chooseItems() {
         int numItemsToSelect = Math.min(openTradingSlots, alchables.size());
         Logger.log("Choosing " + numItemsToSelect + " items to alch.");
-        for (TradingAlchs ta : alchables.subList(0, numItemsToSelect)) {
-            int amtToBuy = (goldAmount / openTradingSlots) / ta.getLivePrice();
-            ta.setAmtToBuy(Math.min(amtToBuy, ta.getLimit()));  // ensure buying limit is not exceeded
-            Logger.log("Adding: " + ta.toString());
-            chosenAlchables.add(ta);
+        int i = 0;
+        while (i < alchables.size() || (chosenAlchables.size() < numItemsToSelect)) {
+            TradingAlchs ta = alchables.get(i);
+            // skips item if it isn't at the buy limit
+            if (previousTradesByName.containsKey(ta.getItemName()) && previousTradesByName.get(ta.getItemName()) < ta.getLimit()) {
+                int amtToBuy = (goldAmount / openTradingSlots) / ta.getLivePrice();
+                ta.setAmtToBuy(Math.min(amtToBuy, ta.getLimit()));  // ensure buying limit is not exceeded
+                Logger.log("Adding: " + ta.toString());
+                chosenAlchables.add(ta);
+            }
+            i++;
         }
         chooseItems = false;
         calculateNatureRunes();
@@ -339,6 +362,22 @@ public class HighAlchBot extends AbstractScript {
         }
     }
 
+    private void getPreviousTrades() {
+        Logger.log("Collecting previous trades.");
+        for (Transaction trans : transactions) {
+            if (trans.isWithinLastFourHours()) {
+                String itemName = trans.getItemName();
+                if (previousTradesByName.containsKey(itemName)) {
+                    previousTradesByName.put(itemName, previousTradesByName.get(itemName) + trans.getQuantity());
+                } else {
+                    previousTradesByName.put(itemName, trans.getQuantity());
+                }
+            }
+        }
+
+        Logger.log(previousTradesByName);
+    }
+
     private void getItemIds() throws Exception {
         URL url = new URL("https://prices.runescape.wiki/api/v1/osrs/mapping");
         HttpURLConnection conn =  (HttpURLConnection) url.openConnection();
@@ -352,6 +391,9 @@ public class HighAlchBot extends AbstractScript {
         JSONArray items = new JSONArray(sb.toString());
         for (int i = 0; i < items.length(); i++) {
             JSONObject obj = items.getJSONObject(i);
+            if (!obj.has("limit")) {
+                continue;
+            }
             int id = obj.getInt("id");
             String name = obj.getString("name");
             int limit = obj.getInt("limit");
@@ -434,11 +476,38 @@ class TradingAlchs {
     }
 }
 
+class TransactionsHelper {
+    private static final String FILE_PATH = "transactions.dat";
+
+    public static void saveTransactions(List<Transaction> transactions) {
+        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(Paths.get(FILE_PATH)))) {
+            out.writeObject(transactions);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<Transaction> loadTransactions() {
+        File file = new File(FILE_PATH);
+        if (!file.exists()) {
+            return new ArrayList<>();
+        }
+
+        try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(Paths.get(FILE_PATH)))) {
+            return (List<Transaction>) in.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+}
+
 class Transaction {
-    private String itemName;
-    private int quantity;
-    private int price;
-    private LocalDateTime time;
+    private final String itemName;
+    private final int quantity;
+    private final int price;
+    private final LocalDateTime time;
 
     public Transaction(String itemName, int quantity, int price) {
         this.itemName = itemName;
