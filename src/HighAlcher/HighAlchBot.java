@@ -3,13 +3,11 @@ package HighAlcher;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
-import org.dreambot.api.methods.filter.impl.ItemFilter;
 import org.dreambot.api.methods.grandexchange.GrandExchange;
 import org.dreambot.api.methods.grandexchange.LivePrices;
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.magic.Magic;
 import org.dreambot.api.methods.magic.Normal;
-import org.dreambot.api.methods.magic.Spell;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.script.AbstractScript;
@@ -21,11 +19,12 @@ import org.dreambot.api.utilities.Timer;
 import org.dreambot.api.wrappers.items.Item;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,7 +42,7 @@ public class HighAlchBot extends AbstractScript {
     final int staffOfFireID = 1387;
     final int natureRuneID = 561;
 
-    private Timer minuteTimer;
+    private Timer natureRuneTimer;
 
     // script flags
     private boolean setup = true;  // get to varrock GE and deposit all items
@@ -53,8 +52,8 @@ public class HighAlchBot extends AbstractScript {
     private boolean buyNatureRunes = false;
     private boolean buyOrderPlacedNatureRunes = false;
 
-    Map<Integer, String> items = new HashMap<>();
-    List<Integer> alchables = new ArrayList<>();
+    List<TradingAlchs> items = new ArrayList<>();
+    List<TradingAlchs> alchables = new ArrayList<>();
     List<TradingAlchs> chosenAlchables = new ArrayList<>();
     private final Tile varrockBank = new Tile(3164, 3487);
     int goldAmount = 0;
@@ -66,7 +65,7 @@ public class HighAlchBot extends AbstractScript {
 
     @Override
     public void onStart() {
-        minuteTimer = new Timer(60_000);
+
         try {
             getItemIds();
             findAlchables();
@@ -78,13 +77,6 @@ public class HighAlchBot extends AbstractScript {
 
     @Override
     public int onLoop() {
-        if (minuteTimer.finished()) {
-            findAlchables();
-            minuteTimer.reset();
-        }
-
-        // skip buying--assume has runes and staff, just alch all non-runes
-
         if (onlyAlch) {
             return alch();
         } else {
@@ -108,15 +100,25 @@ public class HighAlchBot extends AbstractScript {
     }
 
     private int claimItems() {
+        Logger.log("Entering claimItems. Sleeping until GE is ready to collect.");
         Sleep.sleepUntil(GrandExchange::isReadyToCollect, 15000);
-        if (GrandExchange.isReadyToCollect()) {
-            if (GrandExchange.open()) {
-                GrandExchange.collect();
-            }
+        if (tryCollect()) {
+            Logger.log("GrandExchange items ready.");
+            updateAlchables();
         } else {
             Logger.log("GE not ready to collect yet.");
         }
         return 500;
+    }
+
+    private void updateAlchables() {
+        for (Item item : getInventoryAlchables()) {
+            for (TradingAlchs ta : chosenAlchables) {
+                if (ta.getItemName().equals(item.getName())) {
+                    ta.setAmtBought(ta.getAmtBought() + item.getAmount());
+                }
+            }
+        }
     }
 
     private List<Item> getInventoryAlchables() {
@@ -134,6 +136,7 @@ public class HighAlchBot extends AbstractScript {
     }
 
     private int alch(List<Item> items) {
+        Logger.log("Beginning to alch.");
         if (GrandExchange.isOpen()) {
             GrandExchange.close();
         }
@@ -162,12 +165,27 @@ public class HighAlchBot extends AbstractScript {
         return 1000;
     }
 
+    // collect from the GE, then see if we got any alchables
+    private boolean tryCollect() {
+        if (GrandExchange.isOpen()) {
+            GrandExchange.collect();
+            return !getInventoryAlchables().isEmpty();
+        } else {
+            Logger.log("GE not open. Sleeping until open.");
+            GrandExchange.open();
+            Sleep.sleepUntil(GrandExchange::isOpen, 1500);
+        }
+        Logger.log("GE is not open for tryCollect.");
+        return false;
+    }
+
     private int buyNatureRunes() {
         Logger.log("Buying nature runes.");
         if (GrandExchange.open()) {
             if (!buyOrderPlacedNatureRunes) {
                 GrandExchange.buyItem(natureRuneID, natureRunesNeeded, natureRune.getLivePrice());
                 buyOrderPlacedNatureRunes = true;
+                natureRuneTimer = new Timer(60_000);
             }
             Sleep.sleepUntil(GrandExchange::isReadyToCollect, 5000);
             if (GrandExchange.isReadyToCollect()) {
@@ -183,6 +201,10 @@ public class HighAlchBot extends AbstractScript {
                 if (natureRunesNeeded == 0) {
                     buyNatureRunes = false;
                 }
+            } else if (natureRuneTimer.finished()) {
+                Logger.log("Timed out on buying nature runes.");
+                GrandExchange.cancelAll();
+                buyNatureRunes = false;
             }
         }
         return 1000;
@@ -205,16 +227,11 @@ public class HighAlchBot extends AbstractScript {
     }
 
     private int chooseItems() {
-        int numItemsToSelect = openTradingSlots;
-        if (openTradingSlots > alchables.size()) {
-            numItemsToSelect = alchables.size();
-        }
+        int numItemsToSelect = Math.min(openTradingSlots, alchables.size());
         Logger.log("Choosing " + numItemsToSelect + " items to alch.");
-        for (int id : alchables.subList(0, numItemsToSelect)) {
-            Item item = new Item(id, 1);
-            TradingAlchs ta = new TradingAlchs(id, 0, 0, item.getLivePrice(), item.getName());
+        for (TradingAlchs ta : alchables.subList(0, numItemsToSelect)) {
             int amtToBuy = (goldAmount / openTradingSlots) / ta.getLivePrice();
-            ta.setAmtToBuy(amtToBuy);
+            ta.setAmtToBuy(Math.min(amtToBuy, ta.getLimit()));  // ensure buying limit is not exceeded
             Logger.log("Adding: " + ta.toString());
             chosenAlchables.add(ta);
         }
@@ -260,6 +277,7 @@ public class HighAlchBot extends AbstractScript {
             Logger.log("Arrived.");
             arrived = true;
             if (Bank.open()) {
+                Sleep.sleep(500);
                 Bank.depositAllItems();
                 Sleep.sleep(Calculations.random(1000, 1500));
                 if (maxGoldUsage != 0) Bank.withdraw("Coins", maxGoldUsage);
@@ -307,15 +325,15 @@ public class HighAlchBot extends AbstractScript {
         alchables.clear();
         int nature_rune_price = LivePrices.get("Nature rune");
 
-        for (int id : items.keySet()) {
-            Item item = new Item(id, 1);
+        for (TradingAlchs ta : items) {
+            Item item = new Item(ta.getId(), 1);
             int highAlchValue = item.getHighAlchValue();
             int lowAlchValue = item.getLowAlchValue();
             int alchValue = highAlchValue;
             if (lowAlch) alchValue = lowAlchValue;
-            if (alchValue > LivePrices.get(id) + nature_rune_price)  {
+            if (alchValue > LivePrices.get(ta.getId()) + nature_rune_price)  {
                 if (!item.isMembersOnly() || members) {
-                    alchables.add(id);
+                    alchables.add(ta);
                 }
             }
         }
@@ -336,7 +354,9 @@ public class HighAlchBot extends AbstractScript {
             JSONObject obj = items.getJSONObject(i);
             int id = obj.getInt("id");
             String name = obj.getString("name");
-            this.items.put(id, name);
+            int limit = obj.getInt("limit");
+            TradingAlchs ta = new TradingAlchs(id, name,0, 0, 0, limit);
+            this.items.add(ta);
         }
     }
 }
@@ -347,13 +367,23 @@ class TradingAlchs {
     private int amtBought;
     private int livePrice;
     private String itemName;
+    private int limit;
 
-    public TradingAlchs(int id, int amtToBuy, int amtBought, int livePrice, String itemName) {
+    public TradingAlchs(int id, String itemName, int amtToBuy, int amtBought, int livePrice, int limit) {
         this.id = id;
         this.amtToBuy = amtToBuy;
         this.amtBought = amtBought;
         this.livePrice = livePrice;
         this.itemName = itemName;
+        this.limit = limit;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
     }
 
     public String getItemName() {
@@ -365,6 +395,8 @@ class TradingAlchs {
     }
 
     public int getLivePrice() {
+        Item item = new Item(id, 1);
+        livePrice = item.getLivePrice();
         return livePrice;
     }
 
@@ -398,6 +430,38 @@ class TradingAlchs {
 
     @Override
     public String toString() {
-        return itemName + " (" + id + "): " + livePrice + " gp. Buying: " + amtToBuy + ". Bought: " + amtBought + ".";
+        return itemName + " (" + id + "): " + livePrice + " gp. Buying: " + amtToBuy + ". Bought: " + amtBought + " (Limit: " +  limit + ").";
+    }
+}
+
+class Transaction {
+    private String itemName;
+    private int quantity;
+    private int price;
+    private LocalDateTime time;
+
+    public Transaction(String itemName, int quantity, int price) {
+        this.itemName = itemName;
+        this.quantity = quantity;
+        this.price = price;
+        this.time = LocalDateTime.now(); // record time automatically
+    }
+
+    public String getItemName() { return itemName; }
+    public int getQuantity() { return quantity; }
+    public int getPrice() { return price; }
+    public LocalDateTime getTime() { return time; }
+
+    /**
+     * Returns true if this transaction occurred within the past four hours.
+     */
+    public boolean isWithinLastFourHours() {
+        LocalDateTime fourHoursAgo = LocalDateTime.now().minusHours(4);
+        return time.isAfter(fourHoursAgo);
+    }
+
+    @Override
+    public String toString() {
+        return itemName + " x" + quantity + " for " + price + "gp at " + time;
     }
 }
