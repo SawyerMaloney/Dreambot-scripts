@@ -15,21 +15,43 @@ import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 @ScriptManifest(name = "WhatAreYewDoing", description = "F2P woodcutter that goes to the right logs and uses the best axe.", author = "sawyerm",
         version = 1.0, category = Category.WOODCUTTING)
 
 public class WoodCutter extends AbstractScript {
     private boolean initialized = false;
-    private final Tile tree_spot = new Tile(3160, 3456);
-    private final Tile oak_tree_spot = new Tile(3166, 3417);
-    private final Tile yew_tree_spot = new Tile(3209, 3503);
+    private final List<Tile> treeSpots = new ArrayList<>(Arrays.asList(
+            new Tile(3160, 3456),
+
+            new Tile (3107, 3226)
+    ));
+    private final List<Tile> oakTreeSpots = new ArrayList<>(Arrays.asList(
+            new Tile(3166, 3417),
+            new Tile(3101, 3243)
+    ));
+
+    private final List<Tile> yewTreeSpots = new ArrayList<>(Arrays.asList(
+            new Tile(3087, 3477),
+            new Tile(3209, 3503)
+    ));
+
+    private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Adamant axe", "Mithril axe", "Rune axe"));
+    private int axe_index = 0;
 
     private boolean returned = false;
-    private Tile destination = tree_spot;
+    private Tile destination;
 
     private String tree_name = "Tree";
     private String axe_name = "Bronze axe";
 
+    private Tile returnTreeSpot(List<Tile> treeList) {
+        int index = Calculations.random(0, treeList.size() - 1);
+        return treeList.get(index);
+    }
 
     private int bankForAxe() {
         if (Bank.open()) {
@@ -60,16 +82,29 @@ public class WoodCutter extends AbstractScript {
     }
 
     private int deposit() {
+        Logger.log("Checking if we should grab a better axe and depositing logs.");
         updateTreeAndAxe();
         Bank.depositAllExcept(axe_name);
         Sleep.sleep(Calculations.random(200, 2000));
         if (Inventory.isEmpty()) {
             if (!Bank.withdraw(axe_name)) {
-                Logger.log("Failed to find axe " + axe_name);
-                return -1;
+                Logger.log("Failed to find axe " + axe_name + ". Finding next best axe.");
+                return findNextBestAxe();
             }
         }
         return 0;
+    }
+
+    private int findNextBestAxe() {
+        for (int i = 0; i <= axe_index; i++) {
+            if (Bank.contains(axeNames.get(i))) {
+                Bank.withdraw(axeNames.get(i));
+                return 0;
+            }
+        }
+
+        Logger.log("Failed to find any suitable axe!");
+        return -1;
     }
 
     private void initialize() {
@@ -93,6 +128,7 @@ public class WoodCutter extends AbstractScript {
         else if (!Inventory.isFull()) {
             if (destination.distance() > 5 && !returned) {
                 if (Walking.shouldWalk()) {
+                    Logger.log("Walking to tree spot.");
                     Walking.walk(destination);
                 }
             } else {
@@ -116,22 +152,26 @@ public class WoodCutter extends AbstractScript {
 
         // set axe
         if (skill >= 41) {
-            axe_name = "Rune axe";
+            axe_index = 3;
         } else if (skill >= 31) {
-            axe_name = "Adamant axe";
+            axe_index = 3;
         } else if (skill >= 21) {
-            axe_name = "Mithril axe";
+            axe_index = 3;;
         } else if (skill >= 11) {
-            axe_name = "Black axe";
+            axe_index = 3;
         }
+
+        axe_name = axeNames.get(axe_index);
 
         // set tree
         if (skill >= 60) {
             tree_name = "Yew tree";
-            destination = yew_tree_spot;
+            destination = returnTreeSpot(yewTreeSpots);
         } else if (skill >= 15) {
             tree_name = "Oak tree";
-            destination = oak_tree_spot;
+            destination = returnTreeSpot(oakTreeSpots);
+        } else {
+            destination = returnTreeSpot(treeSpots);
         }
 
         Logger.log("Current axe name: " + axe_name + ". Current tree name: " + tree_name);
