@@ -268,7 +268,7 @@ public class HighAlchBot extends AbstractScript {
                 Logger.log("Adding: " + ta.toString());
                 goldAmount -= ta.getAmtToBuy() * ta.getLivePrice();
                 chosenAlchables.add(ta);
-            } else {
+            } else if (!previousTradesByName.containsKey(ta.getItemName())){
                 int amtToBuy = (goldAmount / openTradingSlots) / ta.getLivePrice();
                 ta.setAmtToBuy(Math.min(amtToBuy, ta.getLimit()));  // ensure buying limit is not exceeded
                 Logger.log("Adding: " + ta.toString());
