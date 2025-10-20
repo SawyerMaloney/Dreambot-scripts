@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @ScriptManifest(name = "WhatAreYewDoing", description = "F2P woodcutter that goes to the right logs and uses the best axe.", author = "sawyerm",
-        version = 1.0, category = Category.WOODCUTTING)
+        version = 1.0, category = Category.WOODCUTTING, image = "A3fca38")
 
 public class WoodCutter extends AbstractScript {
     private boolean initialized = false;
@@ -74,7 +74,7 @@ public class WoodCutter extends AbstractScript {
             Sleep.sleep(Calculations.random(200, 2000));
             Logger.log("Found  tree at: " + tree.getTile());
             tree.interact("Chop down");
-            Sleep.sleepUntil(() -> !tree.exists(), 5000);
+            Sleep.sleepUntil(() -> !tree.exists(), 15000);
         } else {
             Logger.log("No tree nearby.");
             returned = false;
