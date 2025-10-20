@@ -1,6 +1,5 @@
 package WhatAreYewDoing;
 
-import f2pVariedTrainer.AIO_Scheduler;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -12,28 +11,25 @@ import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
-import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
 
-@ScriptManifest(name = "AIO", description = "Main controller to run the other scripts.", author = "sawyerm",
-        version = 1.0, category = Category.MISC)
+@ScriptManifest(name = "WhatAreYewDoing", description = "F2P woodcutter that goes to the right logs and uses the best axe.", author = "sawyerm",
+        version = 1.0, category = Category.WOODCUTTING)
 
-public class TreeCutter extends AbstractScript {
+public class WoodCutter extends AbstractScript {
     private boolean initialized = false;
     private final Tile tree_spot = new Tile(3160, 3456);
     private final Tile oak_tree_spot = new Tile(3166, 3417);
+    private final Tile yew_tree_spot = new Tile(3209, 3503);
+
     private boolean returned = false;
     private Tile destination = tree_spot;
 
     private String tree_name = "Tree";
     private String axe_name = "Bronze axe";
 
-    @Override
-    public boolean accept() {
-        return AIO_Scheduler.tree_inv < AIO_Scheduler.individual_inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
-    }
 
     private int bankForAxe() {
         if (Bank.open()) {
@@ -84,7 +80,7 @@ public class TreeCutter extends AbstractScript {
     }
 
     @Override
-    public int execute() {
+    public int onLoop() {
         if (!initialized) {
             initialize();
             initialized = true;
@@ -106,7 +102,6 @@ public class TreeCutter extends AbstractScript {
         } else {
             if (Bank.open()) {
                 int status = deposit();
-                AIO_Scheduler.updateInventories(2);
                 if (status == -1) {
                     return -1;
                 }
@@ -117,10 +112,6 @@ public class TreeCutter extends AbstractScript {
     }
 
     private void updateTreeAndAxe() {
-        if (AIO_Scheduler.axe_name != null) {
-            axe_name = AIO_Scheduler.axe_name;
-
-        }
         int skill = Skills.getRealLevel(Skill.WOODCUTTING);
 
         // set axe
@@ -135,7 +126,10 @@ public class TreeCutter extends AbstractScript {
         }
 
         // set tree
-        if (skill >= 15) {
+        if (skill >= 60) {
+            tree_name = "Yew tree";
+            destination = yew_tree_spot;
+        } else if (skill >= 15) {
             tree_name = "Oak tree";
             destination = oak_tree_spot;
         }
