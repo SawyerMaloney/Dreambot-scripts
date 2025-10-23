@@ -29,7 +29,7 @@ public class AIO_Scheduler extends TaskScript {
     @Override
     public void onStart() {
         Logger.log("Scheduler starting.");
-        addNodes(new TreeCutter());
+        addNodes(new Runecrafter());
         setFailLimit(3);
     }
 

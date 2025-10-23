@@ -70,11 +70,11 @@ public class WoodCutter extends AbstractScript {
         // Find the nearest  tree
         GameObject tree = GameObjects.closest(tree_name);
 
-        if (tree != null && tree.exists() && tree.isOnScreen()) {
+        if (tree != null && tree.exists() && tree.canReach()) {
             Sleep.sleep(Calculations.random(200, 2000));
             Logger.log("Found  tree at: " + tree.getTile());
             tree.interact("Chop down");
-            Sleep.sleepUntil(() -> !tree.exists(), 15000);
+            Sleep.sleepUntil(() -> !tree.exists(), 30000);
         } else {
             Logger.log("No tree nearby.");
             returned = false;

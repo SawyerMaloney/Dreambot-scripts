@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 public class HighAlchBot extends AbstractScript {
     // manifest flags/values
-    final boolean lowAlch = true;
+    final boolean lowAlch = false;
     final boolean members = false;
     final int openTradingSlots = 3;
     final int maxGoldUsage = 0;
@@ -335,6 +335,14 @@ public class HighAlchBot extends AbstractScript {
                     Logger.log("Player does not have staff of fire equipped. Will look for SoF or runes.");
                     if (Bank.contains("Staff of fire")) {
                         Bank.withdraw("Staff of fire");
+                        Sleep.sleep(1000);
+                        Item sof = Inventory.get("Staff of fire");
+                        if (sof != null) {
+                            sof.interact("Wield");
+                        } else {
+                            Logger.log("Failed to equip staff of fire");
+                            return -1;
+                        }
                     } else if (Bank.contains("Fire rune")) {
                         Bank.withdraw("Fire rune");
                     } else {
