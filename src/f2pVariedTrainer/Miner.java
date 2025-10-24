@@ -35,7 +35,7 @@ public class Miner extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.miner_inv < AIO_Scheduler.individual_inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
+        return AIO_Scheduler.valid("Miner");
     }
 
     @Override
@@ -51,7 +51,7 @@ public class Miner extends TaskNode {
             } else if (status == 1) {  // we have the correct pickaxe; otherwise, we are getting it
                 if (Inventory.isFull()) {
                     Inventory.dropAll("Tin ore", "Iron ore");
-                    AIO_Scheduler.updateInventories(1);
+                    AIO_Scheduler.updateInventories("Miner");
                 }
                 if (destination.distance() > 1) {
                     Walking.walk(destination);

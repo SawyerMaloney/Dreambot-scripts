@@ -22,7 +22,7 @@ public class BonesCollector extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit && inventories < inventory_limit;
+        return AIO_Scheduler.valid("BonesCollector");
     }
 
     @Override
@@ -55,7 +55,6 @@ public class BonesCollector extends TaskNode {
                 Logger.log("Bank is open.");
                 Bank.depositAllItems();
                 inventories += 1;
-                AIO_Scheduler.inventories += 1;
                 Logger.log("Deposited all items.");
                 collecting = false;
             }

@@ -6,18 +6,23 @@ import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.impl.TaskScript;
 import org.dreambot.api.utilities.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @ScriptManifest(name = "AIO", description = "Main controller to run the other scripts.", author = "sawyerm",
         version = 1.0, category = Category.MISC)
 
 
 public class AIO_Scheduler extends TaskScript {
 
-    public static int inventories = 0;
     public static int inventory_limit = 50;
 
     public static int fisher_inv = 0;
     public static int miner_inv = 0;
     public static int tree_inv = 0;
+
+    static Map<String, Integer> inventories = new HashMap<>();
+    static Map<String, Integer> inventory_limits  = new HashMap<>();
 
     public static final int individual_inventory_limit = 50;
 
@@ -29,8 +34,30 @@ public class AIO_Scheduler extends TaskScript {
     @Override
     public void onStart() {
         Logger.log("Scheduler starting.");
-        addNodes(new Runecrafter());
+        setInventoryLimits();
+        addInventory();
         setFailLimit(3);
+        addNodes(new TreeCutter());
+    }
+
+    private void addInventory() {
+        inventories.put("Fisher", 0);
+        inventories.put("Miner", 0);
+        inventories.put("Cooker", 0);
+        inventories.put("Runecrafter", 0);
+        inventories.put("TreeCutter", 0);
+        inventories.put("LesserDemonStriker", 0);
+
+    }
+
+    private void setInventoryLimits() {
+        inventory_limits.put("Fisher", individual_inventory_limit);
+        inventory_limits.put("Miner", individual_inventory_limit);
+        inventory_limits.put("Cooker", individual_inventory_limit);
+        inventory_limits.put("Runecrafter", individual_inventory_limit);
+        inventory_limits.put("TreeCutter", individual_inventory_limit);
+        inventory_limits.put("LesserDemonStriker", individual_inventory_limit);
+
     }
 
     @Override
@@ -38,28 +65,21 @@ public class AIO_Scheduler extends TaskScript {
         Logger.log("Script ended");
 
         // if script reached its endpoint (not stopped by user)
-        if (inventories == inventory_limit) {
+        if (atInventoryLimit()) {
             Client.logout();
         }
     }
 
-    public static void updateInventories(int task) {
-        if (task == 0) {
-            // fishing
-            fisher_inv++;
-            inventories++;
-            Logger.log("Fishing. Fishing inv complete: " + fisher_inv + ". Total inventories: " + inventories);
-        } else if (task == 1) {
-            // miner
-            miner_inv++;
-            inventories++;
-            Logger.log("Mining. Mining inv complete: " + miner_inv + ". Total inventories: " + inventories);
-        } else if (task == 2) {
-            // tree cutting
-            tree_inv++;
-            inventories++;
-            Logger.log("Tree cutting. Tree cutting inv complete: " + tree_inv + ". Total inventories: " + inventories);
+    private static boolean atInventoryLimit() {
+        int inventory_count = 0;
+        for (String key : inventories.keySet()) {
+            inventory_count += inventories.get(key);
         }
+        return inventory_count >= inventory_limit;
+    }
+
+    public static void updateInventories(String task) {
+        inventories.put(task, inventories.get(task) + 1);
 
         // reset all inventory counts if we've 'gone through' all of them.
         if (fisher_inv == inventory_limit && miner_inv == inventory_limit && tree_inv == inventory_limit) {
@@ -67,5 +87,9 @@ public class AIO_Scheduler extends TaskScript {
             miner_inv = 0;
             tree_inv = 0;
         }
+    }
+
+    public static boolean valid(String task) {
+        return !atInventoryLimit() && inventories.get(task) < inventory_limits.get(task);
     }
 }

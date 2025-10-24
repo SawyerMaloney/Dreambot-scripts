@@ -5,7 +5,7 @@ import org.dreambot.api.script.TaskNode;
 public class Runecrafter extends TaskNode {
     @Override
     public boolean accept() {
-        return false;
+        return AIO_Scheduler.valid("Runecrafter");
     }
 
     @Override

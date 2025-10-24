@@ -14,7 +14,6 @@ import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.wrappers.interactive.NPC;
 import org.dreambot.api.methods.interactive.Players;
 
-
 public class Fisher extends TaskNode {
     private boolean initialized = false;
 
@@ -35,31 +34,37 @@ public class Fisher extends TaskNode {
     }
     @Override
     public boolean accept() {
-        return AIO_Scheduler.fisher_inv < AIO_Scheduler.individual_inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
+        return AIO_Scheduler.valid("Fisher");
     }
 
-    private int retrieveRod() {
+    private int retrieveItems() {
         if (Bank.open()) {
             Sleep.sleep(Calculations.random(0, 100));
             Bank.depositAllExcept("Feather", rod_name);
             Sleep.sleep(Calculations.random(500, 1000));
-            Sleep.sleepUntil(() -> Bank.withdraw(rod_name), 5000);
-            Sleep.sleep(Calculations.random(300, 500));
-            if (!Inventory.contains(rod_name)) {
-                Logger.log("Failed to get rod " + rod_name);
-                return -1;
-            }
+            if (retrieveItem(rod_name, false) == -1) return -1;
             Sleep.sleep(Calculations.random(500, 1000));
             if (feathers) {
-                Sleep.sleepUntil(() -> Bank.withdrawAll("Feather"), 5000);
-                Sleep.sleep(1000);
-                if (!Inventory.contains("Feather")) {
-                    Logger.log("Failed to get feathers");
-                    return -1;
-                }
+                if (retrieveItem("Feather", true) == -1) return -1;
+                Sleep.sleep(Calculations.random(500, 1000));
             }
         }
+
         return 500 + Calculations.random(100, 300);
+    }
+
+    private int retrieveItem(String item, boolean all) {
+        if (all) {
+            Sleep.sleepUntil(() -> Bank.withdrawAll(item), 5000);
+        } else {
+            Sleep.sleepUntil(() -> Bank.withdraw(item), 5000);
+        }
+        Sleep.sleep(Calculations.random(300, 500));
+        if (!Inventory.contains(item)) {
+            Logger.log("Failed to get item " + item);
+            return -1;
+        }
+        return 1;
     }
 
     private void fish() {
@@ -81,21 +86,17 @@ public class Fisher extends TaskNode {
     @Override
     public int execute() {
         if (!initialized) {
+            Logger.log("Initializing fisher.");
             initialize();
         }
         if (!Inventory.contains(rod_name) || (feathers && !Inventory.contains("Feather"))) {
-            Logger.log("Missing rod or feathers.");
-            return retrieveRod();
+            Logger.log("Missing rod, feathers, or axe and tinderbox.");
+            return retrieveItems();
         }
         else if (!Inventory.isFull()) {
             if (!Players.getLocal().isAnimating()) {
                 if (destination.distance() > 10 && !fishing) {
-                    if (Walking.shouldWalk()) {
-                        Logger.log("Walking to spot...");
-                        Walking.walk(destination);
-                    } else {
-                        Logger.log("Shouldn't walk. Waiting...");
-                    }
+                    walkToSpot();
                 } else {
                     fish();
                 }
@@ -105,19 +106,34 @@ public class Fisher extends TaskNode {
                 return 5000;
             }
         } else {
-            Logger.log("Full inventory. Dropping fish.");
+            Logger.log("Full inventory. Cooking or banking fish.");
             fishing = false;
-            Inventory.dropAll("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon");
-            AIO_Scheduler.updateInventories(0);
-            setNames();
+            return bankFish();
         }
         return 500 + Calculations.random(100, 500);
     }
 
-    private void setNames() {
-        int skill = Skills.getRealLevel(Skill.FISHING);
+    private int bankFish() {
+        if (Bank.open()) {
+            Bank.depositAllExcept(rod_name, "Feather");
+        }
 
-        if (skill >= 20) {
+        return 1000;
+    }
+
+    private void walkToSpot() {
+        if (Walking.shouldWalk()) {
+            Logger.log("Walking to spot...");
+            Walking.walk(destination);
+        } else {
+            Logger.log("Shouldn't walk. Waiting...");
+        }
+    }
+
+    private void setNames() {
+        int fishingSkill = Skills.getRealLevel(Skill.FISHING);
+
+        if (fishingSkill >= 20) {
             rod_name = "Fly fishing rod";
             destination = fly_fishing_tile;
             feathers = true;

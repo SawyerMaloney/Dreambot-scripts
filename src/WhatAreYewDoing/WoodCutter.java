@@ -154,11 +154,11 @@ public class WoodCutter extends AbstractScript {
         if (skill >= 41) {
             axe_index = 3;
         } else if (skill >= 31) {
-            axe_index = 3;
+            axe_index = 2;
         } else if (skill >= 21) {
-            axe_index = 3;;
+            axe_index = 1;;
         } else if (skill >= 11) {
-            axe_index = 3;
+            axe_index = 0;
         }
 
         axe_name = axeNames.get(axe_index);

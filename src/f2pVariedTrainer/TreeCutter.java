@@ -17,6 +17,7 @@ public class TreeCutter extends TaskNode {
     private boolean initialized = false;
     private final Tile tree_spot = new Tile(3160, 3456);
     private final Tile oak_tree_spot = new Tile(3166, 3417);
+    private final Tile yew_tree_spot = new Tile(3209, 3503);
     private boolean returned = false;
     private Tile destination = tree_spot;
 
@@ -25,7 +26,7 @@ public class TreeCutter extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.tree_inv < AIO_Scheduler.individual_inventory_limit && AIO_Scheduler.inventories < AIO_Scheduler.inventory_limit;
+        return AIO_Scheduler.valid("TreeCutter");
     }
 
     private int bankForAxe() {
@@ -99,7 +100,7 @@ public class TreeCutter extends TaskNode {
         } else {
             if (Bank.open()) {
                 int status = deposit();
-                AIO_Scheduler.updateInventories(2);
+                AIO_Scheduler.updateInventories("TreeCutter");
                 if (status == -1) {
                     return -1;
                 }
@@ -128,7 +129,11 @@ public class TreeCutter extends TaskNode {
         }
 
         // set tree
-        if (skill >= 15) {
+        if (skill >= 60) {
+            tree_name = "Yew tree";
+            destination = yew_tree_spot;
+        }
+        else if (skill >= 15) {
             tree_name = "Oak tree";
             destination = oak_tree_spot;
         }
