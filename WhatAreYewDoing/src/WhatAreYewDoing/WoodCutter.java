@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @ScriptManifest(name = "WhatAreYewDoing", description = "F2P woodcutter that goes to the right logs and uses the best axe.", author = "sawyerm",
-        version = 1.0, category = Category.WOODCUTTING, image = "A3fca38")
+        version = 1.0, category = Category.WOODCUTTING, image = "osbuoHN")
 
 public class WoodCutter extends AbstractScript {
     private boolean initialized = false;
