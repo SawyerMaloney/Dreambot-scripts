@@ -108,6 +108,7 @@ public class WoodCutter extends AbstractScript {
     }
 
     private void initialize() {
+        Logger.log("All changes went well!");
         Logger.log("Starting script...");
         Logger.log("Current woodcutting skill: " + Skills.getRealLevel(Skill.WOODCUTTING));
         updateTreeAndAxe();
