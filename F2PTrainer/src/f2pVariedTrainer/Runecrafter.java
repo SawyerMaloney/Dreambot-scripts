@@ -4,6 +4,7 @@ import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.container.impl.equipment.Equipment;
 import org.dreambot.api.methods.interactive.GameObjects;
+import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.script.TaskNode;
@@ -16,6 +17,7 @@ public class Runecrafter extends TaskNode {
     private enum State {WALK_TO_BANK, BANKING, WALK_TO_ALTAR, USE_RUINS, CRAFT, LEAVE_RUINS}
     private final Tile air_altar_tile = new Tile(2987, 3292);
     private final Tile falador_bank_tile = new Tile(3012, 3355);
+    private final Tile air_teleport_tile = new Tile(2841, 4830);
     private State state = State.WALK_TO_BANK;
     @Override
     public boolean accept() {
@@ -50,11 +52,16 @@ public class Runecrafter extends TaskNode {
         Sleep.sleepUntil(() -> {
             GameObject portal = GameObjects.closest("Portal");
             return portal != null && portal.exists();
-        }, 5000);
+        }, 2000);
         GameObject portal =  GameObjects.closest("Portal");
         if (portal != null && portal.exists() && portal.interact()) {
-            Logger.log("WALK_TO_BANK");
-            state = State.WALK_TO_BANK;
+            Sleep.sleepUntil(() -> air_altar_tile.distance() < 10, 5000);
+            if (air_altar_tile.distance() < 10) {
+                Logger.log("WALK_TO_BANK");
+                state = State.WALK_TO_BANK;
+            } else {
+                Logger.log("Failed to go through portal.");
+            }
         } else {
             Logger.log("Failed to find portal.");
         }
@@ -65,11 +72,15 @@ public class Runecrafter extends TaskNode {
         Sleep.sleepUntil(() -> {
             GameObject altar = GameObjects.closest("Altar");
             return altar != null && altar.exists();
-        }, 5000);
+        }, 2000);
         GameObject altar = GameObjects.closest("Altar");
         if (altar != null && altar.exists() && altar.interact()) {
-            Logger.log("LEAVE_RUINS");
-            state = State.LEAVE_RUINS;
+            if (!Inventory.contains("Pure essence")) {
+                Logger.log("LEAVE_RUINS");
+                state = State.LEAVE_RUINS;
+            } else {
+                Logger.log("Failed to convert all pure essence.");
+            }
         } else {
             Logger.log("Failed to interact with altar.");
         }
@@ -80,12 +91,17 @@ public class Runecrafter extends TaskNode {
         Sleep.sleepUntil(() -> {
             GameObject ruin = GameObjects.closest("Mysterious ruins");
             return ruin != null && ruin.exists();
-        }, 5000);
+        }, 2000);
         GameObject ruin = GameObjects.closest("Mysterious ruins");
         if (ruin != null) {
             if (ruin.interact()) {
-                Logger.log("CRAFT");
-                state = State.CRAFT;
+                Sleep.sleepUntil(() -> air_teleport_tile.distance() < 10, 3000);
+                if (air_teleport_tile.distance() < 10) {
+                    Logger.log("CRAFT");
+                    state = State.CRAFT;
+                } else {
+                    Logger.log("Failed to teleport.");
+                }
             } else {
                 Logger.log("Failed to interact with mysterious ruins.");
             }
