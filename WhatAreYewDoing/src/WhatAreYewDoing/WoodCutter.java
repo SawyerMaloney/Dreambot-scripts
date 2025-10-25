@@ -23,6 +23,8 @@ import java.util.List;
         version = 1.0, category = Category.WOODCUTTING, image = "osbuoHN")
 
 public class WoodCutter extends AbstractScript {
+    private enum State {WALKING_TO_BANK, GETTING_AXE, WALKING_TO_TREE, CHOP}
+    private State state = State.WALKING_TO_BANK;
     private boolean initialized = false;
     private final List<Tile> treeSpots = new ArrayList<>(Arrays.asList(
             new Tile(3160, 3456),
@@ -119,7 +121,10 @@ public class WoodCutter extends AbstractScript {
         Logger.log("Starting script...");
         Logger.log("Current woodcutting skill: " + Skills.getRealLevel(Skill.WOODCUTTING));
         updateTreeAndAxe();
-        Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ".");
+        if (Inventory.contains(axe_name)) {
+            state = State.WALKING_TO_TREE;
+        }
+        Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ", state: " + state + ".");
     }
 
     @Override
@@ -127,32 +132,64 @@ public class WoodCutter extends AbstractScript {
         if (!initialized) {
             initialize();
             initialized = true;
-        } else if (!Inventory.contains(axe_name)) {
-            int status = bankForAxe();
-            if (status == -1) {
-                return -1;
-            }
-        }
-        else if (!Inventory.isFull()) {
-            if (destination.distance() > 5 && !returned) {
-                if (Walking.shouldWalk()) {
-                    Logger.log("Walking to tree spot.");
-                    Walking.walk(destination);
-                }
-            } else {
-                returned =  true;
-                chopTree();
-            }
         } else {
-            if (Bank.open()) {
-                int status = deposit();
-                if (status == -1) {
-                    return -1;
-                }
-                returned = false;
+            switch (state) {
+                case WALKING_TO_BANK:
+                    return walk_to_bank();
+            }
+
+        }
+
+//            if (!Inventory.contains(axe_name)) {
+//            int status = bankForAxe();
+//            if (status == -1) {
+//                return -1;
+//            }
+//        }
+//        else if (!Inventory.isFull()) {
+//            if (destination.distance() > 5 && !returned) {
+//                if (Walking.shouldWalk()) {
+//                    Logger.log("Walking to tree spot.");
+//                    Walking.walk(destination);
+//                }
+//            } else {
+//                returned =  true;
+//                chopTree();
+//            }
+//        } else {
+//            if (Bank.open()) {
+//                int status = deposit();
+//                if (status == -1) {
+//                    return -1;
+//                }
+//                returned = false;
+//            }
+//        }
+        return 500;
+    }
+
+    private int walk_to_bank() {
+        if (Bank.open()) {
+            Sleep.sleepUntil(() -> Bank.depositAllExcept(axe_name), 3000);
+            updateAxeIndex();
+            Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
+            if (Inventory.contains(axe_name)) {
+                state = State.WALKING_TO_TREE;
+            } else {
+                Logger.log("Failed to withdraw axe" + axe_name + ".");
+                return 500;
             }
         }
         return 500;
+    }
+
+    private void updateAxeIndex() {
+        if (!Inventory.contains(axe_name)) {
+            while (axe_index > 0 && !Bank.contains(axe_name)) {
+                axe_index -= 1;
+                axe_name =  axeNames.get(axe_index);
+            }
+        }
     }
 
     private void updateTreeAndAxe() {
