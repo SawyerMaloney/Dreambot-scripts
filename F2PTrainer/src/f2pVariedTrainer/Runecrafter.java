@@ -4,7 +4,6 @@ import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.container.impl.equipment.Equipment;
 import org.dreambot.api.methods.interactive.GameObjects;
-import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.methods.skills.Skills;
@@ -32,7 +31,7 @@ public class Runecrafter extends TaskNode {
     String tiara_name = "Air tiara";
     String talisman_name = "Air talisman";
 
-    private boolean initalized = false;
+    private boolean initialized = false;
 
     private State state = State.WALK_TO_BANK;
 
@@ -43,9 +42,9 @@ public class Runecrafter extends TaskNode {
 
     @Override
     public int execute() {
-        if (!initalized) {
+        if (!initialized) {
             chooseRune();
-            initalized = true;
+            initialized = true;
         }
 
         switch (state) {

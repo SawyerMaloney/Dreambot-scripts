@@ -85,8 +85,9 @@ public class AIO_Scheduler extends TaskScript {
     }
 
     public static void updateInventories(String task) {
-        Logger.log("Updating inventory for " + task + ". Current inventories: " + inventories.get(task) + 1 + "/" + inventory_limits.get(task));
         inventories.put(task, inventories.get(task) + 1);
+        Logger.log("Updating inventory for " + task + ". Current inventories: " + inventories.get(task) + "/" + inventory_limits.get(task));
+
     }
 
     public static boolean valid(String task) {
