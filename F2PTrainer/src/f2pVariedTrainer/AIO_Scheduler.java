@@ -85,14 +85,8 @@ public class AIO_Scheduler extends TaskScript {
     }
 
     public static void updateInventories(String task) {
+        Logger.log("Updating inventory for " + task + ". Current inventories: " + inventories.get(task) + 1 + "/" + inventory_limits.get(task));
         inventories.put(task, inventories.get(task) + 1);
-
-        // reset all inventory counts if we've 'gone through' all of them.
-        if (fisher_inv == inventory_limit && miner_inv == inventory_limit && tree_inv == inventory_limit) {
-            fisher_inv = 0;
-            miner_inv = 0;
-            tree_inv = 0;
-        }
     }
 
     public static boolean valid(String task) {
