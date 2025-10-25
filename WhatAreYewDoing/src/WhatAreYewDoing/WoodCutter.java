@@ -60,7 +60,14 @@ public class WoodCutter extends AbstractScript {
             Sleep.sleep(Calculations.random(1000, 1500));
             if (!Inventory.contains(axe_name)) {
                 Logger.log("Failed to find axe " + axe_name);
-                return -1;
+                axe_index -= 1;
+                if (axe_index < 0) {
+                    Logger.log("Could not find any suitable axe.");
+                    return -1;
+                } else {
+                    axe_name = axeNames.get(axe_index);
+                }
+
             }
         }
         return 0;
@@ -157,7 +164,7 @@ public class WoodCutter extends AbstractScript {
         } else if (skill >= 31) {
             axe_index = 2;
         } else if (skill >= 21) {
-            axe_index = 1;;
+            axe_index = 1;
         } else if (skill >= 11) {
             axe_index = 0;
         }
