@@ -41,7 +41,7 @@ public class AIO_Scheduler extends TaskScript {
         setInventoryLimits();
         addInventory();
         setFailLimit(3);
-        addNodes(new Cooker());
+        addNodes(new Runecrafter());
     }
 
     private void addInventory() {
@@ -105,7 +105,7 @@ public class AIO_Scheduler extends TaskScript {
         } else {
             Sleep.sleepUntil(() -> Bank.withdraw(item), 5000);
         }
-        Sleep.sleep(Calculations.random(300, 500));
+        Sleep.sleepUntil(() -> Inventory.contains(item), 5000);
         if (!Inventory.contains(item)) {
             Logger.log("Failed to get item " + item);
             return -1;
