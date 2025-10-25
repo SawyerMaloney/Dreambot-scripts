@@ -1,5 +1,6 @@
 package f2pVariedTrainer;
 
+import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.methods.skills.Skills;
@@ -24,6 +25,7 @@ public class Cooker extends TaskNode {
     public int execute() {
         if (!initialized) {
             findBestFish();
+            initialized = true;
         }
         if (varrock_bank_tile.distance() > 1) {
             if (Walking.shouldWalk()) {
@@ -32,7 +34,11 @@ public class Cooker extends TaskNode {
                 return 1000;
             }
         } else {
-            return -1;
+            if (Bank.open()) {
+                if (Bank.contains("Tinderbox", "Logs")) {
+                    if (!Inventory.contains(""))
+                }
+            }
         }
         return 0;
     }
