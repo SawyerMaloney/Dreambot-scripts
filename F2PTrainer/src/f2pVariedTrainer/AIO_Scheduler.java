@@ -1,10 +1,14 @@
 package f2pVariedTrainer;
 
 import org.dreambot.api.Client;
+import org.dreambot.api.methods.Calculations;
+import org.dreambot.api.methods.container.impl.Inventory;
+import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.impl.TaskScript;
 import org.dreambot.api.utilities.Logger;
+import org.dreambot.api.utilities.Sleep;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,12 +39,15 @@ public class AIO_Scheduler extends TaskScript {
     public void onStart() {
         Logger.log("Scheduler starting.");
         setInventoryLimits();
+        Logger.log("Finished setInventoryLimits.");
         addInventory();
+        Logger.log("Finished addInventory.");
         setFailLimit(3);
-        addNodes(new TreeCutter());
+        addNodes(new Cooker());
     }
 
     private void addInventory() {
+        Logger.log("Adding inventories to the dictionary.");
         inventories.put("Fisher", 0);
         inventories.put("Miner", 0);
         inventories.put("Cooker", 0);
@@ -51,6 +58,7 @@ public class AIO_Scheduler extends TaskScript {
     }
 
     private void setInventoryLimits() {
+        Logger.log("Setting inventory limits.");
         inventory_limits.put("Fisher", individual_inventory_limit);
         inventory_limits.put("Miner", individual_inventory_limit);
         inventory_limits.put("Cooker", individual_inventory_limit);
@@ -75,6 +83,7 @@ public class AIO_Scheduler extends TaskScript {
         for (String key : inventories.keySet()) {
             inventory_count += inventories.get(key);
         }
+        Logger.log("Inventory count: " + inventory_count + ". Inventory limit: " + inventory_limit);
         return inventory_count >= inventory_limit;
     }
 
@@ -92,4 +101,19 @@ public class AIO_Scheduler extends TaskScript {
     public static boolean valid(String task) {
         return !atInventoryLimit() && inventories.get(task) < inventory_limits.get(task);
     }
+
+    public static int retrieveItem(String item, boolean all) {
+        if (all) {
+            Sleep.sleepUntil(() -> Bank.withdrawAll(item), 5000);
+        } else {
+            Sleep.sleepUntil(() -> Bank.withdraw(item), 5000);
+        }
+        Sleep.sleep(Calculations.random(300, 500));
+        if (!Inventory.contains(item)) {
+            Logger.log("Failed to get item " + item);
+            return -1;
+        }
+        return 1;
+    }
+
 }

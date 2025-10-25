@@ -42,29 +42,15 @@ public class Fisher extends TaskNode {
             Sleep.sleep(Calculations.random(0, 100));
             Bank.depositAllExcept("Feather", rod_name);
             Sleep.sleep(Calculations.random(500, 1000));
-            if (retrieveItem(rod_name, false) == -1) return -1;
+            if (AIO_Scheduler.retrieveItem(rod_name, false) == -1) return -1;
             Sleep.sleep(Calculations.random(500, 1000));
             if (feathers) {
-                if (retrieveItem("Feather", true) == -1) return -1;
+                if (AIO_Scheduler.retrieveItem("Feather", true) == -1) return -1;
                 Sleep.sleep(Calculations.random(500, 1000));
             }
         }
 
         return 500 + Calculations.random(100, 300);
-    }
-
-    private int retrieveItem(String item, boolean all) {
-        if (all) {
-            Sleep.sleepUntil(() -> Bank.withdrawAll(item), 5000);
-        } else {
-            Sleep.sleepUntil(() -> Bank.withdraw(item), 5000);
-        }
-        Sleep.sleep(Calculations.random(300, 500));
-        if (!Inventory.contains(item)) {
-            Logger.log("Failed to get item " + item);
-            return -1;
-        }
-        return 1;
     }
 
     private void fish() {
