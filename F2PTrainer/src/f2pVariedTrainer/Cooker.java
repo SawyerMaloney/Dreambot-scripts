@@ -4,17 +4,21 @@ import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.interactive.GameObjects;
+import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.walking.impl.Walking;
+import org.dreambot.api.methods.widget.Widgets;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
+import org.dreambot.api.wrappers.widgets.WidgetChild;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Cooker extends TaskNode {
 
@@ -22,12 +26,12 @@ public class Cooker extends TaskNode {
     private final Tile stove_tile = new Tile(3078, 3495);
     private boolean initialized = false;
     private List<String> fishNames = new ArrayList<>();
+    private boolean atBank = false;
 
     private boolean setupInventory = false;
 
     @Override
     public boolean accept() {
-        Logger.log("Accept: " + AIO_Scheduler.valid("Cooker"));
         return AIO_Scheduler.valid("Cooker");
     }
 
@@ -36,63 +40,119 @@ public class Cooker extends TaskNode {
         if (!initialized) {
             findBestFish();
             initialized = true;
-        }
-        if (bank_tile.distance() > 1) {
-            if (Walking.shouldWalk()) {
-                Logger.log("Walking to varrock");
-                Walking.walk(bank_tile);
-                return 1000;
+        } else if (!atBank) {
+            if (bank_tile.distance() > 1) {
+                if (Walking.shouldWalk()) {
+                    Logger.log("Walking to Edgeville bank.");
+                    Walking.walk(bank_tile);
+                    return 500;
+                }
+                return 500;
             }
+            atBank = true;
         } else {
-            if (!setupInventory && Bank.open()) {
-                if (Bank.contains("Tinderbox", "Logs")) {
-                    if (!Inventory.contains("Tinderbox")) {
-                        AIO_Scheduler.retrieveItem("Tinderbox", false);
-                        Sleep.sleep(Calculations.random(500, 1500));
-                    }
-                    if (!Inventory.contains("Logs")) {
-                        AIO_Scheduler.retrieveItem("Logs", false);
-                    }
-
+            if (!setupInventory) {
+                Logger.log("Setting up inv., grabbing fish.");
+                if (Bank.open()) {
                     // now grab fish
+                    Bank.depositAllItems();
                     for (String fishName : fishNames) {
                         if (!Inventory.isFull() && Bank.contains(fishName)) {
+                            Logger.log("Found fish: " + fishName);
                             AIO_Scheduler.retrieveItem(fishName, true);
+                            Sleep.sleep(Calculations.random(1000, 1500));
+                        } else {
+                            if (!Inventory.isFull()) {
+                                Logger.log("Did not find fish: " + fishName);
+                            }
                         }
                     }
-                    setupInventory = true;
+                    // if we don't have anything in our inventory, quit because we have no fish
+                    if (Inventory.isEmpty()) {
+                        Logger.log("Nothing to cook!");
+                        return -1;
+                    } else if (inventoryHasRawFood()) {
+                        // need this to know that we've reset our inventory fully
+                        setupInventory = true;
+                    }
                 }
             } else {
                 // cook fish
                 if (stove_tile.distance() > 5) {
                     if (Walking.shouldWalk()) {
                         Logger.log("Walking to stove.");
+                        Walking.walk(stove_tile);
                     }
+                    return 500;
                 } else {
+                    Sleep.sleepUntil(() -> {
+                        GameObject stove = GameObjects.closest("Stove");
+                        return stove != null && stove.exists() && stove.canReach();
+                    }, 10000);
                     GameObject stove = GameObjects.closest("Stove");
                     if (stove != null && stove.exists() && stove.canReach()) {
-                        String[] actions = stove.getActions();
-                        for (String action : actions) {
-                            Logger.log("Action: " + action + ".");
+                        Logger.log("interacting with stove");
+                        if (stove.interact("Cook")) {
+                            if (Sleep.sleepUntil(() -> {
+                                WidgetChild cookWidget = Widgets.get(270, 15);
+                                return cookWidget != null && cookWidget.isVisible();
+                            }, 3000)) {
+                                WidgetChild cookWidget = Widgets.get(270, 15);
+                                if (cookWidget != null && cookWidget.interact()) {
+                                    Logger.log("Started cooking all.");
+
+                                    AtomicLong lastAnimationTime = new AtomicLong(System.currentTimeMillis());
+                                    // wait while cooking
+                                    Sleep.sleepWhile(() -> {
+                                        if (Players.getLocal().isAnimating()) {
+                                            lastAnimationTime.set(System.currentTimeMillis());
+                                        }
+                                        return inventoryHasRawFood() && (Players.getLocal().isAnimating() || System.currentTimeMillis() - lastAnimationTime.get() < 2000);
+                                    }, 60000 + Calculations.random(3000, 10000));
+
+                                    Logger.log("sleepWhile cooking loop broke.");
+                                    if (!inventoryHasRawFood()) {
+                                        // really done cooking
+                                        Logger.log("Cooking finished.");
+                                        findBestFish();
+                                        setupInventory = false;
+                                    }
+                                }
+                            }
+                        } else {
+                            Logger.log("Could not click cook widget.");
+                            return -1;
                         }
+                    } else {
+                        Logger.log("Couldn't not find stove.");
+                        return -1;
                     }
                 }
             }
         }
-        return 0;
+        return 500;
+    }
+
+    private boolean inventoryHasRawFood() {
+        for (String fishName : fishNames) {
+            if (Inventory.contains(fishName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void findBestFish() {
+        Logger.log("Finding cookable fish based on level.");
         int cookingSkill = Skills.getRealLevel(Skill.COOKING);
 
-        if (cookingSkill < 15) {
-            fishNames.add("Raw shrimp");
-            fishNames.add("Raw anchovies");
-        } else {
-            fishNames.add("Raw trout");
-            if (cookingSkill >= 25) {
-                fishNames.add("Raw salmon");
-            }
+        if (cookingSkill >= 25) {
+            fishNames.add("Raw salmon");
         }
+        if (cookingSkill >= 15) {
+            fishNames.add("Raw trout");
+        }
+        fishNames.add("Raw shrimps");
+        fishNames.add("Raw anchovies");
     }
 }

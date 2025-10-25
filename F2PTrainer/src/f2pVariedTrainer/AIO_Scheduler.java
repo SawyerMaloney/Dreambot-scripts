@@ -39,9 +39,7 @@ public class AIO_Scheduler extends TaskScript {
     public void onStart() {
         Logger.log("Scheduler starting.");
         setInventoryLimits();
-        Logger.log("Finished setInventoryLimits.");
         addInventory();
-        Logger.log("Finished addInventory.");
         setFailLimit(3);
         addNodes(new Cooker());
     }
@@ -83,7 +81,6 @@ public class AIO_Scheduler extends TaskScript {
         for (String key : inventories.keySet()) {
             inventory_count += inventories.get(key);
         }
-        Logger.log("Inventory count: " + inventory_count + ". Inventory limit: " + inventory_limit);
         return inventory_count >= inventory_limit;
     }
 
