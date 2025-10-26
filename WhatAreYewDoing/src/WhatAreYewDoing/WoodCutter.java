@@ -15,6 +15,7 @@ import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +27,10 @@ public class WoodCutter extends AbstractScript {
     private enum State {WALKING_TO_BANK, GETTING_AXE, WALKING_TO_TREE, CHOP}
     private State state = State.WALKING_TO_BANK;
     private boolean initialized = false;
+    private boolean tree = false;
+    private boolean oak = false;
+    private boolean yew = false;
+
     private final List<Tile> treeSpots = new ArrayList<>(Arrays.asList(
             new Tile(3160, 3456),
 
@@ -49,7 +54,20 @@ public class WoodCutter extends AbstractScript {
     private String tree_name = "Tree";
     private String axe_name = "Bronze axe";
 
+    @Override
+    public void onStart() {
+        YewGUI gui = new YewGUI();
+        gui.sleepUntilConfirmed();
+
+        tree = gui.getTree();
+        oak = gui.getOak();
+        yew = gui.getYew();
+
+        Logger.log("tree: " + tree + ". oak: " + oak + ". yew: " + yew + ".");
+    }
+
     private Tile returnTreeSpot(List<Tile> treeList) {
+        Logger.log("treelist.size " + treeList.size());
         int index = Calculations.random(0, treeList.size() - 1);
         return treeList.get(index);
     }
@@ -67,7 +85,6 @@ public class WoodCutter extends AbstractScript {
     }
 
     private void initialize() {
-        Logger.log("All changes went well!");
         Logger.log("Starting script...");
         Logger.log("Current woodcutting skill: " + Skills.getRealLevel(Skill.WOODCUTTING));
         updateTreeAndAxe();
@@ -105,7 +122,7 @@ public class WoodCutter extends AbstractScript {
         if (tree != null && tree.exists() && tree.canReach()) {
             Logger.log("Found  tree at: " + tree.getTile());
             Sleep.sleepUntil(() -> tree.interact("Chop down"), 5000);
-            Sleep.sleepUntil(() -> !tree.exists(), 30000);
+            Sleep.sleepUntil(() -> !tree.exists() || Inventory.isFull(), 30000);
             if (Inventory.isFull()) {
                 Logger.log("WALKING_TO_BANK");
                 state = State.WALKING_TO_BANK;
@@ -172,17 +189,29 @@ public class WoodCutter extends AbstractScript {
 
         axe_name = axeNames.get(axe_index);
 
-        // set tree
-        if (skill >= 60) {
-            tree_name = "Yew tree";
-            destination = returnTreeSpot(yewTreeSpots);
-        } else if (skill >= 15) {
-            tree_name = "Oak tree";
-            destination = returnTreeSpot(oakTreeSpots);
+        // see if user has set tree
+        if (yew || oak || tree) {
+            if (yew) {
+                tree_name = "Yew tree";
+                destination = returnTreeSpot(yewTreeSpots);
+            } else if (oak) {
+                tree_name = "Oak tree";
+                destination = returnTreeSpot(oakTreeSpots);
+            } else {
+                destination = returnTreeSpot(treeSpots);
+            }
         } else {
-            destination = returnTreeSpot(treeSpots);
+            // set tree
+            if (skill >= 60) {
+                tree_name = "Yew tree";
+                destination = returnTreeSpot(yewTreeSpots);
+            } else if (skill >= 15) {
+                tree_name = "Oak tree";
+                destination = returnTreeSpot(oakTreeSpots);
+            } else {
+                destination = returnTreeSpot(treeSpots);
+            }
         }
-
         Logger.log("Current axe name: " + axe_name + ". Current tree name: " + tree_name);
     }
 }
