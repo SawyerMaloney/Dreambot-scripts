@@ -3,6 +3,7 @@ package WhatAreYewDoing;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
+import org.dreambot.api.methods.grandexchange.GrandExchange;
 import org.dreambot.api.methods.interactive.GameObjects;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.skills.Skill;
@@ -24,12 +25,13 @@ import java.util.List;
         version = 1.0, category = Category.WOODCUTTING, image = "osbuoHN")
 
 public class WoodCutter extends AbstractScript {
-    private enum State {WALKING_TO_BANK, GETTING_AXE, WALKING_TO_TREE, CHOP}
+    private enum State {WALKING_TO_BANK, WALKING_TO_TREE, CHOP, BUY_AXE}
     private State state = State.WALKING_TO_BANK;
     private boolean initialized = false;
     private boolean tree = false;
     private boolean oak = false;
     private boolean yew = false;
+    private boolean useGE = false;
 
     private final List<Tile> treeSpots = new ArrayList<>(Arrays.asList(
             new Tile(3160, 3456),
@@ -45,6 +47,8 @@ public class WoodCutter extends AbstractScript {
             new Tile(3087, 3477),
             new Tile(3209, 3503)
     ));
+
+    private final Tile ge_tile = new Tile(3162, 3488);
 
     private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Adamant axe", "Mithril axe", "Rune axe"));
     private int axe_index = 0;
@@ -109,9 +113,36 @@ public class WoodCutter extends AbstractScript {
 
                 case CHOP:
                     return chop();
-            }
 
+                case BUY_AXE:
+                    return buy_axe();
+            }
         }
+        return 500;
+    }
+
+    private int buy_axe() {
+        if (ge_tile.distance() < 1) {
+            if (Walking.shouldWalk()) {
+                Walking.walk(ge_tile);
+            }
+        } else {
+            int open_slot = GrandExchange.getFirstOpenSlot();
+            if (open_slot == -1) {
+                Logger.log("no GE slots open.");
+                return -1;
+            } else {
+                GrandExchange.addBuyItem(axe_name);
+                Sleep.sleepUntil(() -> GrandExchange.isReadyToCollect(open_slot), 30000);
+                if (GrandExchange.isReadyToCollect()) {
+                    GrandExchange.collect();
+                    state = State.WALKING_TO_BANK;
+                } else {
+                    GrandExchange.cancelOffer(open_slot);
+                }
+            }
+        }
+
         return 500;
     }
 
@@ -151,7 +182,12 @@ public class WoodCutter extends AbstractScript {
             updateAxeIndex();
             Sleep.sleepUntil(() -> Inventory.isEmpty(), 1000);
             if (!Inventory.contains(axe_name)) {
-                Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
+                if (Bank.contains(axe_name)) {
+                    Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
+                } else if (useGE) {
+                    state = State.BUY_AXE;
+                    return 500;
+                }
             }
             Sleep.sleepUntil(() -> Inventory.contains(axe_name), 5000);
             if (Inventory.contains(axe_name)) {
