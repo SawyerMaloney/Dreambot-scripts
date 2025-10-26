@@ -132,7 +132,11 @@ public class WoodCutter extends AbstractScript {
         if (Bank.open()) {
             Sleep.sleepUntil(() -> Bank.depositAllExcept(axe_name), 3000);
             updateAxeIndex();
-            Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
+            Sleep.sleepUntil(() -> Inventory.isEmpty(), 1000);
+            if (!Inventory.contains(axe_name)) {
+                Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
+            }
+            Sleep.sleepUntil(() -> Inventory.contains(axe_name), 5000);
             if (Inventory.contains(axe_name)) {
                 Logger.log("WALKING_TO_TREE");
                 state = State.WALKING_TO_TREE;
