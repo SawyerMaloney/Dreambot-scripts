@@ -44,7 +44,6 @@ public class WoodCutter extends AbstractScript {
     private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Adamant axe", "Mithril axe", "Rune axe"));
     private int axe_index = 0;
 
-    private boolean returned = false;
     private Tile destination;
 
     private String tree_name = "Tree";
@@ -53,55 +52,6 @@ public class WoodCutter extends AbstractScript {
     private Tile returnTreeSpot(List<Tile> treeList) {
         int index = Calculations.random(0, treeList.size() - 1);
         return treeList.get(index);
-    }
-
-    private int bankForAxe() {
-        if (Bank.open()) {
-            Bank.depositAllItems();
-            Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 5000);
-            Sleep.sleep(Calculations.random(1000, 1500));
-            if (!Inventory.contains(axe_name)) {
-                Logger.log("Failed to find axe " + axe_name);
-                axe_index -= 1;
-                if (axe_index < 0) {
-                    Logger.log("Could not find any suitable axe.");
-                    return -1;
-                } else {
-                    axe_name = axeNames.get(axe_index);
-                }
-
-            }
-        }
-        return 0;
-    }
-
-    private void chopTree() {
-        // Find the nearest  tree
-        GameObject tree = GameObjects.closest(tree_name);
-
-        if (tree != null && tree.exists() && tree.canReach()) {
-            Sleep.sleep(Calculations.random(200, 2000));
-            Logger.log("Found  tree at: " + tree.getTile());
-            tree.interact("Chop down");
-            Sleep.sleepUntil(() -> !tree.exists(), 30000);
-        } else {
-            Logger.log("No tree nearby.");
-            returned = false;
-        }
-    }
-
-    private int deposit() {
-        Logger.log("Checking if we should grab a better axe and depositing logs.");
-        updateTreeAndAxe();
-        Bank.depositAllExcept(axe_name);
-        Sleep.sleep(Calculations.random(200, 2000));
-        if (Inventory.isEmpty()) {
-            if (!Bank.withdraw(axe_name)) {
-                Logger.log("Failed to find axe " + axe_name + ". Finding next best axe.");
-                return findNextBestAxe();
-            }
-        }
-        return 0;
     }
 
     private int findNextBestAxe() {
@@ -136,35 +86,45 @@ public class WoodCutter extends AbstractScript {
             switch (state) {
                 case WALKING_TO_BANK:
                     return walk_to_bank();
+
+                case WALKING_TO_TREE:
+                    return walk_to_tree();
+
+                case CHOP:
+                    return chop();
             }
 
         }
+        return 500;
+    }
 
-//            if (!Inventory.contains(axe_name)) {
-//            int status = bankForAxe();
-//            if (status == -1) {
-//                return -1;
-//            }
-//        }
-//        else if (!Inventory.isFull()) {
-//            if (destination.distance() > 5 && !returned) {
-//                if (Walking.shouldWalk()) {
-//                    Logger.log("Walking to tree spot.");
-//                    Walking.walk(destination);
-//                }
-//            } else {
-//                returned =  true;
-//                chopTree();
-//            }
-//        } else {
-//            if (Bank.open()) {
-//                int status = deposit();
-//                if (status == -1) {
-//                    return -1;
-//                }
-//                returned = false;
-//            }
-//        }
+    private int chop() {
+        // Find the nearest  tree
+        GameObject tree = GameObjects.closest(tree_name);
+
+        if (tree != null && tree.exists() && tree.canReach()) {
+            Logger.log("Found  tree at: " + tree.getTile());
+            Sleep.sleepUntil(() -> tree.interact("Chop down"), 5000);
+            Sleep.sleepUntil(() -> !tree.exists(), 30000);
+            if (Inventory.isFull()) {
+                Logger.log("WALKING_TO_BANK");
+                state = State.WALKING_TO_BANK;
+            }
+        } else {
+            Logger.log("No tree nearby.");
+        }
+        return 500;
+    }
+
+    private int walk_to_tree() {
+        if (destination.distance() > 5) {
+                if (Walking.shouldWalk()) {
+                    Walking.walk(destination);
+                }
+            } else {
+                Logger.log("CHOP");
+                state = State.CHOP;
+            }
         return 500;
     }
 
@@ -174,10 +134,10 @@ public class WoodCutter extends AbstractScript {
             updateAxeIndex();
             Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
             if (Inventory.contains(axe_name)) {
+                Logger.log("WALKING_TO_TREE");
                 state = State.WALKING_TO_TREE;
             } else {
                 Logger.log("Failed to withdraw axe" + axe_name + ".");
-                return 500;
             }
         }
         return 500;
