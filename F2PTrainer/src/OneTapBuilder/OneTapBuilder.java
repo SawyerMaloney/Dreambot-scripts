@@ -1,7 +1,6 @@
-package f2pVariedTrainer;
+package OneTapBuilder;
 
 import org.dreambot.api.Client;
-import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.script.Category;
@@ -17,7 +16,7 @@ import java.util.Map;
         version = 1.0, category = Category.MISC)
 
 
-public class AIO_Scheduler extends TaskScript {
+public class OneTapBuilder extends TaskScript {
 
     public static int inventory_limit = 50;
 

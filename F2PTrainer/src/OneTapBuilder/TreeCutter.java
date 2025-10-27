@@ -1,4 +1,4 @@
-package f2pVariedTrainer;
+package OneTapBuilder;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -26,7 +26,7 @@ public class TreeCutter extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.valid("TreeCutter");
+        return OneTapBuilder.valid("TreeCutter");
     }
 
     private int bankForAxe() {
@@ -100,7 +100,7 @@ public class TreeCutter extends TaskNode {
         } else {
             if (Bank.open()) {
                 int status = deposit();
-                AIO_Scheduler.updateInventories("TreeCutter");
+                OneTapBuilder.updateInventories("TreeCutter");
                 if (status == -1) {
                     return -1;
                 }
@@ -111,8 +111,8 @@ public class TreeCutter extends TaskNode {
     }
 
     private void updateTreeAndAxe() {
-        if (AIO_Scheduler.axe_name != null) {
-            axe_name = AIO_Scheduler.axe_name;
+        if (OneTapBuilder.axe_name != null) {
+            axe_name = OneTapBuilder.axe_name;
 
         }
         int skill = Skills.getRealLevel(Skill.WOODCUTTING);

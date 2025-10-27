@@ -1,4 +1,4 @@
-package f2pVariedTrainer;
+package OneTapBuilder;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
@@ -32,7 +32,7 @@ public class Cooker extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.valid("Cooker");
+        return OneTapBuilder.valid("Cooker");
     }
 
     @Override
@@ -59,7 +59,7 @@ public class Cooker extends TaskNode {
                     for (String fishName : fishNames) {
                         if (!Inventory.isFull() && Bank.contains(fishName)) {
                             Logger.log("Found fish: " + fishName);
-                            AIO_Scheduler.retrieveItem(fishName, true);
+                            OneTapBuilder.retrieveItem(fishName, true);
                             Sleep.sleep(Calculations.random(1000, 1500));
                         } else {
                             if (!Inventory.isFull()) {

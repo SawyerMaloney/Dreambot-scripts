@@ -1,4 +1,4 @@
-package f2pVariedTrainer;
+package OneTapBuilder;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -22,7 +22,7 @@ public class BonesCollector extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.valid("BonesCollector");
+        return OneTapBuilder.valid("BonesCollector");
     }
 
     @Override

@@ -1,4 +1,4 @@
-package f2pVariedTrainer;
+package OneTapBuilder;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -34,7 +34,7 @@ public class Fisher extends TaskNode {
     }
     @Override
     public boolean accept() {
-        return AIO_Scheduler.valid("Fisher");
+        return OneTapBuilder.valid("Fisher");
     }
 
     private int retrieveItems() {
@@ -42,10 +42,10 @@ public class Fisher extends TaskNode {
             Sleep.sleep(Calculations.random(0, 100));
             Bank.depositAllExcept("Feather", rod_name);
             Sleep.sleep(Calculations.random(500, 1000));
-            if (AIO_Scheduler.retrieveItem(rod_name, false) == -1) return -1;
+            if (OneTapBuilder.retrieveItem(rod_name, false) == -1) return -1;
             Sleep.sleep(Calculations.random(500, 1000));
             if (feathers) {
-                if (AIO_Scheduler.retrieveItem("Feather", true) == -1) return -1;
+                if (OneTapBuilder.retrieveItem("Feather", true) == -1) return -1;
                 Sleep.sleep(Calculations.random(500, 1000));
             }
         }

@@ -1,4 +1,4 @@
-package f2pVariedTrainer;
+package OneTapBuilder;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.item.GroundItems;
@@ -23,7 +23,7 @@ public class LesserDemonStriker extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.canCast;
+        return OneTapBuilder.canCast;
     }
 
     @Override
@@ -46,7 +46,7 @@ public class LesserDemonStriker extends TaskNode {
                     return 1000;
                 } else {
                     Logger.log("Cannot cast spell.");
-                    AIO_Scheduler.canCast = false;
+                    OneTapBuilder.canCast = false;
                 }
             } else {
                 Logger.log("Cannot find lesser demon. Sleep until found.");

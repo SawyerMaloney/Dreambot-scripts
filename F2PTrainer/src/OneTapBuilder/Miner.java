@@ -1,4 +1,4 @@
-package f2pVariedTrainer;
+package OneTapBuilder;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -35,7 +35,7 @@ public class Miner extends TaskNode {
 
     @Override
     public boolean accept() {
-        return AIO_Scheduler.valid("Miner");
+        return OneTapBuilder.valid("Miner");
     }
 
     @Override
@@ -51,7 +51,7 @@ public class Miner extends TaskNode {
             } else if (status == 1) {  // we have the correct pickaxe; otherwise, we are getting it
                 if (Inventory.isFull()) {
                     Inventory.dropAll("Tin ore", "Iron ore");
-                    AIO_Scheduler.updateInventories("Miner");
+                    OneTapBuilder.updateInventories("Miner");
                 }
                 if (destination.distance() > 1) {
                     Walking.walk(destination);
