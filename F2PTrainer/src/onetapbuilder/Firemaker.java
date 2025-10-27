@@ -33,12 +33,10 @@ public class Firemaker extends TaskNode {
         BURN_WOOD
     }
 
-    private boolean initialized = false;
     private String logName = "";
     private State state = State.WALKING_TO_BANK;
 
     private final Tile geTile = new Tile(3162, 3487);
-    private final Tile burnTile = new Tile(3147, 3501);
 
     private GameObject fire;
 
@@ -52,9 +50,6 @@ public class Firemaker extends TaskNode {
 
     @Override
     public int execute() {
-        if (!initialized) {
-            init();
-        }
         switch (state) {
             case WALKING_TO_BANK:
                 return walkToBank();
@@ -68,11 +63,6 @@ public class Firemaker extends TaskNode {
                 return burnWood();
         }
         return 500;
-    }
-
-    private void init() {
-        setLogName();
-        initialized = true;
     }
 
     private int findFire() {
@@ -163,6 +153,7 @@ public class Firemaker extends TaskNode {
     }
 
     private int walkToBank() {
+        setLogName();
         if (geTile.distance() > 10) {
             if (Walking.shouldWalk()) {
                 Walking.walk(geTile);
@@ -176,7 +167,6 @@ public class Firemaker extends TaskNode {
 
     private int retrieveWood() {
         if (Bank.open()) {
-            setLogName();
             if (!Inventory.contains("Tinderbox")) {
                 if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
                     Logger.error("Failed to withdraw tinderbox.");
@@ -192,18 +182,32 @@ public class Firemaker extends TaskNode {
             // withdraw logs
             if (Sleep.sleepUntil(() -> Bank.withdrawAll(logName), 5000)) {
                 Logger.log("Withdrew logs.");
+                Bank.close();
+                Logger.log("FIND_OPEN_SPOT");
+                state = State.FIND_OPEN_SPOT;
             } else {
-                Logger.log("Failed to withdraw logs.");
+                Logger.log("Failed to withdraw logs " + logName + ".");
                 if (!Bank.contains(logName)) {
                     // TODO get exact number of logs needed so we don't overbuy
                     OneTapBuilder.addNeededItem(new AbstractMap.SimpleEntry<>(logName, 100));
+                    logName = stepDownOneLog();
+                    if (logName.isEmpty()) {
+                        Logger.log("No usable logs.");
+                        // TODO trigger something in OneTap's activate
+                    }
                 }
             }
-            Bank.close();
-            Logger.log("FIND_OPEN_SPOT");
-            state = State.FIND_OPEN_SPOT;
         }
         return 500;
+    }
+
+    private String stepDownOneLog () {
+        int index = logNames.indexOf(logName);
+        if (index != logNames.size()) {
+            return logNames.get(index + 1);
+        } else {
+            return "";
+        }
     }
 
     private int findOpenSpot() {

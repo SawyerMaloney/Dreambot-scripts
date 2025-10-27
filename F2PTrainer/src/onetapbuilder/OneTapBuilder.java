@@ -112,6 +112,7 @@ public class OneTapBuilder extends TaskScript {
     }
 
     public static boolean addNeededItem(Map.Entry<String, Integer> item) {
+        Logger.log("Adding needed item: " + item.getKey() + ".");
         neededItems.add(item);
         return true;
     }
