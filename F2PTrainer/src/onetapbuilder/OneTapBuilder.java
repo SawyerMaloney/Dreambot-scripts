@@ -6,14 +6,13 @@ import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.map.Tile;
+import org.dreambot.api.methods.widget.Widgets;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.impl.TaskScript;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
-import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.interactive.Locatable;
-import org.dreambot.api.wrappers.interactive.Player;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -117,10 +116,10 @@ public class OneTapBuilder extends TaskScript {
         return true;
     }
 
-    public static void sleepOnAnimating(BooleanSupplier returnPredicate, int timeout, int randomLower, int randomUpper) {
+    public static boolean sleepWhileAnimating(BooleanSupplier returnPredicate, int timeout, int randomLower, int randomUpper) {
         AtomicLong lastAnimationTime = new AtomicLong(System.currentTimeMillis());
         // wait while cooking
-        Sleep.sleepWhile(() -> {
+        return Sleep.sleepWhile(() -> {
             if (Players.getLocal().isAnimating()) {
                 lastAnimationTime.set(System.currentTimeMillis());
             }
@@ -147,5 +146,9 @@ public class OneTapBuilder extends TaskScript {
     public static <T extends Locatable> T getClosest(List<T> locatables) {
         List<T> sortedLocatables =  getSortedClosest(locatables);
         return sortedLocatables.get(0);
+    }
+
+    public static boolean isLevelUpVisible() {
+        return Widgets.get(233, 1) != null && Widgets.get(233, 1).isVisible();
     }
 }

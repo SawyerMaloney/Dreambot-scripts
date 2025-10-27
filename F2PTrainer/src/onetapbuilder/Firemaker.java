@@ -20,7 +20,9 @@ import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.wrappers.widgets.WidgetChild;
 
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class Firemaker extends TaskNode {
     private enum State {
@@ -39,6 +41,9 @@ public class Firemaker extends TaskNode {
     private final Tile burnTile = new Tile(3147, 3501);
 
     private GameObject fire;
+
+    private final List<String> logNames = Arrays.asList("Yew logs", "Maple logs", "Willow logs", "Oak logs", "Logs");
+
 
     @Override
     public boolean accept() {
@@ -72,17 +77,25 @@ public class Firemaker extends TaskNode {
 
     private int findFire() {
         GameObject fire = GameObjects.closest("Forester's Campfire");
-        if (fire != null && fire.distance() < 10) {
+        if (fire != null && fire.exists() && fire.distance() < 5) {
+            Logger.log("Nearby Forester's Campfire found.");
             this.fire = fire;
             Logger.log("BURN_WOOD");
             state = State.BURN_WOOD;
             return 0;
+        } else {
+            if (fire == null) {
+                Logger.log("Fire null");
+            } else {
+                Logger.log("null: false. exists: " + fire.exists() + ". distance: " + fire.distance());
+            }
         }
         Item tinderbox = Inventory.get("Tinderbox");
         if (tinderbox != null) {
             Logger.log("Got tinderbox. Using on " + logName + ".");
             tinderbox.useOn(logName);
-            OneTapBuilder.sleepOnAnimating(() -> true, 10000, 500, 1000);
+            OneTapBuilder.sleepWhileAnimating(() -> true, 10000, 500, 1000);
+            fire = GameObjects.closest("Fire");
             Logger.log("BURN_WOOD");
             state = State.BURN_WOOD;
         }
@@ -90,46 +103,63 @@ public class Firemaker extends TaskNode {
     }
 
     private int burnWood() {
-        if (Sleep.sleepUntil(() -> {
-            GameObject fire = GameObjects.closest("Fire");
-            GameObject campfire = GameObjects.closest("Forester's Campfire");
-            return (fire != null && fire.distance() < 10) || (campfire != null && campfire.distance() < 10);
-        }, 5000)) {
-            Logger.log("Found nearby fire.");
-            fire = OneTapBuilder.getClosest(GameObjects.all("Fire"));
-            if (fire == null) {
-                fire = GameObjects.closest("Forester's Campfire");
-            }
-            if (fire != null) {
-                Item logs = Inventory.get(logName);
-                if (logs != null) {
-                    Logger.log("Using logs on fire.");
-                    logs.useOn(fire);
-                    if (Sleep.sleepUntil(() -> {
-                        WidgetChild burn = Widgets.get(270, 15);
-                        return burn != null && burn.isVisible();
-                    }, 5000)) {
-                        Logger.log("Found WidgetChild, interacting.");
-                        WidgetChild burn = Widgets.get(270, 15);
-                        if (burn != null && burn.interact()) {
-                            Logger.log("Sleep on animating.");
-                            OneTapBuilder.sleepOnAnimating(() -> Inventory.onlyContains("Tinderbox"), 30000, 500, 1000);
-                        }
+        if (fire == null) {
+            Logger.log("Fire null, finding closest fire.");
+            fire = GameObjects.closest("Fire");
+        }
 
-                        if (Inventory.isEmpty()) {
-                            Logger.log("WALKING_TO_BANK");
-                            state = State.WALKING_TO_BANK;
-                        }
-                    }
-                } else {
-                    Logger.log("Failed to find " + logName + " in inventory.");
-                }
+        Item logs = Inventory.get(logName);
+        if (logs != null) {
+            if (fire.exists()) {
+                Logger.log("Using logs on fire.");
+                useLogsOnFire(logs);
+            } else {
+                Logger.log("Fire no longer exists.");
+                Logger.log("FIND_OPEN_SPOT");
+                state = State.FIND_OPEN_SPOT;
             }
         } else {
-            // TODO possibly state change here?
-            Logger.log("Failed to find close fire.");
+            Logger.log("Failed to find " + logName + " in inventory.");
+            logName = findLogInInventory();
+            if (logName.isEmpty()) {
+                state = State.WALKING_TO_BANK;
+            }
         }
         return 500;
+    }
+
+    private String findLogInInventory() {
+        for (String logName : logNames) {
+            if (Inventory.contains(logName)) {
+                return logName;
+            }
+        }
+        return "";
+    }
+
+    private void useLogsOnFire(Item logs) {
+        logs.useOn(fire);
+        if (Sleep.sleepUntil(() -> {
+            WidgetChild burn = Widgets.get(270, 15);
+            return burn != null && burn.isVisible();
+        }, 5000)) {
+            Logger.log("Found WidgetChild, interacting.");
+            WidgetChild burn = Widgets.get(270, 15);
+            if (burn != null && burn.interact()) {
+                Logger.log("Sleep on animating.");
+                if (OneTapBuilder.sleepWhileAnimating(() -> Inventory.contains(logName) && !OneTapBuilder.isLevelUpVisible(), 30000, 500, 1000)) {
+                    Logger.log("while statement evaluated to false.");
+                } else {
+                    Logger.log("Timeout hit.");
+                }
+            }
+            if (Inventory.isEmpty()) {
+                Logger.log("WALKING_TO_BANK");
+                state = State.WALKING_TO_BANK;
+            }
+        } else {
+            Logger.log("Timeout hit on finding burn widget.");
+        }
     }
 
     private int walkToBank() {
@@ -146,6 +176,7 @@ public class Firemaker extends TaskNode {
 
     private int retrieveWood() {
         if (Bank.open()) {
+            setLogName();
             if (!Inventory.contains("Tinderbox")) {
                 if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
                     Logger.error("Failed to withdraw tinderbox.");
@@ -176,6 +207,14 @@ public class Firemaker extends TaskNode {
     }
 
     private int findOpenSpot() {
+        GameObject campfire = GameObjects.closest("Forester's Campfire");
+        if (campfire != null && campfire.distance() < 5) {
+            Logger.log("FIND_FIRE");
+            state = State.FIND_FIRE;
+            return 0;
+        } else {
+            Logger.log("No nearby Forester's Campfire.");
+        }
         List<GameObject> gos = GameObjects.all();
         List<Player> players = Players.all();
         Tile localTile = Players.getLocal().getTile();

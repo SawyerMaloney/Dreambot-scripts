@@ -4,7 +4,6 @@ import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.interactive.GameObjects;
-import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.methods.skills.Skills;
@@ -18,7 +17,6 @@ import org.dreambot.api.wrappers.widgets.WidgetChild;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Cooker extends TaskNode {
 
@@ -100,7 +98,7 @@ public class Cooker extends TaskNode {
                                 WidgetChild cookWidget = Widgets.get(270, 15);
                                 if (cookWidget != null && cookWidget.interact()) {
                                     Logger.log("Started cooking all.");
-                                    OneTapBuilder.sleepOnAnimating(this::inventoryHasRawFood, 60000, 3000, 10000);
+                                    OneTapBuilder.sleepWhileAnimating(this::inventoryHasRawFood, 60000, 3000, 10000);
                                     Logger.log("sleepWhile cooking loop broke.");
                                     if (!inventoryHasRawFood()) {
                                         // really done cooking
