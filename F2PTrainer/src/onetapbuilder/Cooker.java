@@ -1,4 +1,4 @@
-package OneTapBuilder;
+package onetapbuilder;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
@@ -100,16 +100,7 @@ public class Cooker extends TaskNode {
                                 WidgetChild cookWidget = Widgets.get(270, 15);
                                 if (cookWidget != null && cookWidget.interact()) {
                                     Logger.log("Started cooking all.");
-
-                                    AtomicLong lastAnimationTime = new AtomicLong(System.currentTimeMillis());
-                                    // wait while cooking
-                                    Sleep.sleepWhile(() -> {
-                                        if (Players.getLocal().isAnimating()) {
-                                            lastAnimationTime.set(System.currentTimeMillis());
-                                        }
-                                        return inventoryHasRawFood() && (Players.getLocal().isAnimating() || System.currentTimeMillis() - lastAnimationTime.get() < 2000);
-                                    }, 60000 + Calculations.random(3000, 10000));
-
+                                    OneTapBuilder.sleepOnAnimating(this::inventoryHasRawFood, 60000, 3000, 10000);
                                     Logger.log("sleepWhile cooking loop broke.");
                                     if (!inventoryHasRawFood()) {
                                         // really done cooking

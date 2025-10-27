@@ -1,4 +1,4 @@
-package OneTapBuilder;
+package onetapbuilder;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;

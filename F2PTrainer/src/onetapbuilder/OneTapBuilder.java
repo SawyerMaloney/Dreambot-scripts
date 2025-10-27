@@ -1,28 +1,32 @@
-package OneTapBuilder;
+package onetapbuilder;
 
 import org.dreambot.api.Client;
+import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
+import org.dreambot.api.methods.interactive.Players;
+import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.impl.TaskScript;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
+import org.dreambot.api.wrappers.interactive.GameObject;
+import org.dreambot.api.wrappers.interactive.Locatable;
+import org.dreambot.api.wrappers.interactive.Player;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
-@ScriptManifest(name = "AIO", description = "Main controller to run the other scripts.", author = "sawyerm",
+@ScriptManifest(name = "[One Tap] F2P Account Builder", description = "Main controller to run the other scripts.", author = "sawyerm",
         version = 1.0, category = Category.MISC)
 
 
 public class OneTapBuilder extends TaskScript {
 
     public static int inventory_limit = 50;
-
-    public static int fisher_inv = 0;
-    public static int miner_inv = 0;
-    public static int tree_inv = 0;
 
     static Map<String, Integer> inventories = new HashMap<>();
     static Map<String, Integer> inventory_limits  = new HashMap<>();
@@ -32,7 +36,8 @@ public class OneTapBuilder extends TaskScript {
     public static boolean canCast = true;
 
     public final static String axe_name = null;
-    public final static String tree_name = null;
+
+    private static List<Map.Entry<String, Integer>> neededItems = new ArrayList<>();
 
     @Override
     public void onStart() {
@@ -40,7 +45,7 @@ public class OneTapBuilder extends TaskScript {
         setInventoryLimits();
         addInventory();
         setFailLimit(3);
-        addNodes(new Runecrafter());
+        addNodes(new Firemaker());
     }
 
     private void addInventory() {
@@ -51,7 +56,7 @@ public class OneTapBuilder extends TaskScript {
         inventories.put("Runecrafter", 0);
         inventories.put("TreeCutter", 0);
         inventories.put("LesserDemonStriker", 0);
-
+        inventories.put("Firemaker", 0);
     }
 
     private void setInventoryLimits() {
@@ -62,7 +67,7 @@ public class OneTapBuilder extends TaskScript {
         inventory_limits.put("Runecrafter", individual_inventory_limit);
         inventory_limits.put("TreeCutter", individual_inventory_limit);
         inventory_limits.put("LesserDemonStriker", individual_inventory_limit);
-
+        inventory_limits.put("Firemaker", individual_inventory_limit);
     }
 
     @Override
@@ -107,4 +112,40 @@ public class OneTapBuilder extends TaskScript {
         return 1;
     }
 
+    public static boolean addNeededItem(Map.Entry<String, Integer> item) {
+        neededItems.add(item);
+        return true;
+    }
+
+    public static void sleepOnAnimating(BooleanSupplier returnPredicate, int timeout, int randomLower, int randomUpper) {
+        AtomicLong lastAnimationTime = new AtomicLong(System.currentTimeMillis());
+        // wait while cooking
+        Sleep.sleepWhile(() -> {
+            if (Players.getLocal().isAnimating()) {
+                lastAnimationTime.set(System.currentTimeMillis());
+            }
+            return returnPredicate.getAsBoolean() && (Players.getLocal().isAnimating() || System.currentTimeMillis() - lastAnimationTime.get() < 2000);
+        }, timeout + Calculations.random(randomLower, randomUpper));
+    }
+
+    public static boolean anyOnTile(List<? extends Locatable> entities, Tile tile) {
+        for (Locatable entity : entities) {
+            if (entity.getTile().equals(tile) && !entity.equals(Players.getLocal())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static <T extends Locatable> List<T> getSortedClosest(List<T> locatables) {
+        Tile playerTile = Players.getLocal().getTile();
+        return locatables.stream()
+                .sorted(Comparator.comparingDouble(l -> l.distance(playerTile)))
+                .collect(Collectors.toList());
+    }
+
+    public static <T extends Locatable> T getClosest(List<T> locatables) {
+        List<T> sortedLocatables =  getSortedClosest(locatables);
+        return sortedLocatables.get(0);
+    }
 }
