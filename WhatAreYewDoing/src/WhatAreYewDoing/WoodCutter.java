@@ -91,7 +91,7 @@ public class WoodCutter extends AbstractScript {
 
     private Tile returnTreeSpot(List<Tile> treeList) {
         Logger.log("treelist.size " + treeList.size());
-        int index = Calculations.random(0, treeList.size() - 1);
+        int index = Calculations.random(0, treeList.size());
         return treeList.get(index);
     }
 
