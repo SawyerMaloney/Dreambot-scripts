@@ -1,7 +1,11 @@
 package WhatAreYewDoing;
 
+import org.dreambot.api.utilities.Images;
+import org.dreambot.api.utilities.Logger;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class YewGUI {
     private volatile boolean tree;
@@ -15,16 +19,77 @@ public class YewGUI {
     }
 
     public void showGUI() {
-        JFrame frame = new JFrame("WhatAreYewDoing Settings");
+        JFrame frame = new JFrame("WhatAreYewDoing — One Tap Woodcutting");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(300, 150);
-        frame.setLayout(new GridLayout(3,2));
+        frame.setSize(450, 450);
+        frame.setLocationRelativeTo(null);
 
-        JCheckBox treeBox = new JCheckBox("Chop trees", tree);
-        JCheckBox oakBox = new JCheckBox("Chop Oak trees", oak);
-        JCheckBox yewBox = new JCheckBox("Chop Yew trees", yew);
+        // ---------- Main panel setup ----------
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        panel.setBackground(new Color(80, 99, 85));
 
-        JButton startButton = new JButton("Start");
+        // ---------- Logo ----------
+        try {
+            BufferedImage icon = Images.loadImage("https://i.imgur.com/bNkG7Z7.png"); // Direct .png URL
+            if (icon != null) {
+                // Scale image nicely
+                Image scaled = icon.getScaledInstance(64, 64, Image.SCALE_SMOOTH);
+                JLabel logoLabel = new JLabel(new ImageIcon(scaled));
+                logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                panel.add(logoLabel);
+                panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+                // Set window icon
+                frame.setIconImage(icon);
+                Logger.log("✅ Logo loaded successfully");
+            } else {
+                Logger.log("⚠️ Images.loadImage returned null (check URL)");
+            }
+        } catch (Exception e) {
+            Logger.log("❌ Failed to load logo: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // ---------- Title ----------
+        JLabel titleLabel = new JLabel("One Tap Woodcutting");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(titleLabel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // ---------- Instruction ----------
+        JLabel subtitleLabel = new JLabel("Select which trees to chop:");
+        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(subtitleLabel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        titleLabel.setForeground(Color.WHITE);
+        subtitleLabel.setForeground(Color.WHITE);
+
+        // ---------- Checkboxes ----------
+        JCheckBox treeBox = new JCheckBox("Chop Regular Trees", tree);
+        JCheckBox oakBox = new JCheckBox("Chop Oak Trees", oak);
+        JCheckBox yewBox = new JCheckBox("Chop Yew Trees", yew);
+
+        for (JCheckBox box : new JCheckBox[]{treeBox, oakBox, yewBox}) {
+            box.setAlignmentX(Component.CENTER_ALIGNMENT);
+            box.setForeground(Color.WHITE);
+            box.setBackground(Color.BLACK);
+            panel.add(box);
+            panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        }
+
+        // ---------- Start button ----------
+        JButton startButton = new JButton("Start Script");
+        startButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        startButton.setBackground(new Color(0x4CAF50));
+        startButton.setForeground(Color.WHITE);
+        startButton.setFocusPainted(false);
+        startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        startButton.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         startButton.addActionListener(e -> {
             tree = treeBox.isSelected();
             oak = oakBox.isSelected();
@@ -33,12 +98,21 @@ public class YewGUI {
             frame.dispose();
         });
 
-        frame.add(treeBox);
-        frame.add(oakBox);
-        frame.add(yewBox);
-        frame.add(startButton);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(startButton);
 
-        frame.setLocationRelativeTo(null);
+        // ---------- Info Note at Bottom ----------
+        JLabel noteLabel = new JLabel("If nothing is selected, the script will automatically choose the most efficient log.");
+        noteLabel.setForeground(Color.LIGHT_GRAY); // Soft gray text
+        noteLabel.setFont(new Font("Arial", Font.ITALIC, 11)); // Small italic font
+        noteLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacing
+        panel.add(noteLabel);
+
+        panel.add(Box.createRigidArea(new Dimension(0, 10))); // spacing before note
+        panel.add(noteLabel);
+
+        frame.add(panel);
         frame.setVisible(true);
     }
 
