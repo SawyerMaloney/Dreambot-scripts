@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@ScriptManifest(name = "WhatAreYewDoing", description = "F2P woodcutter that goes to the right logs and uses the best axe.", author = "sawyerm",
-        version = 1.0, category = Category.WOODCUTTING, image = "osbuoHN")
+@ScriptManifest(name = "[One Tap] F2P Woodcutting", description = "[One Tap] F2P woodcutter that goes to the right logs and uses the best axe.", author = "sawyerm",
+        version = 1.0, category = Category.WOODCUTTING, image = "8Zl24YQ")
 
 public class WoodCutter extends AbstractScript {
     private enum State {WALKING_TO_BANK, WALKING_TO_TREE, CHOP, BUY_AXE}
