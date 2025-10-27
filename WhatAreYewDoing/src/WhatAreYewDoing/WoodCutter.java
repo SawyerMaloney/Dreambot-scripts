@@ -5,6 +5,7 @@ import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.grandexchange.GrandExchange;
 import org.dreambot.api.methods.interactive.GameObjects;
+import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.methods.skills.Skills;
@@ -58,8 +59,19 @@ public class WoodCutter extends AbstractScript {
     private String tree_name = "Tree";
     private String axe_name = "Bronze axe";
 
+    private DiscordWebhook webhook;
+    private final String webhook_url = "https://discord.com/api/webhooks/1432171424512217139/E3AwwCdQS6f2vGAf_9k5T65m7SScnc2LNVH5zpHKYrMm9lApA_GpiJIYAouajelmyhFe";
+    private long startTime;
+    private int inventories = 0;
+    private String playerName;
+
     @Override
     public void onStart() {
+        startTime = System.currentTimeMillis();
+        playerName = Players.getLocal().getName();
+        webhook = new DiscordWebhook(webhook_url);
+        int responseCode = webhook.sendMessage("["+ playerName + "] Script started.");
+        Logger.log("Discord webhook captured with response code " + responseCode + ".");
         YewGUI gui = new YewGUI();
         gui.sleepUntilConfirmed();
 
@@ -68,6 +80,13 @@ public class WoodCutter extends AbstractScript {
         yew = gui.getYew();
 
         Logger.log("tree: " + tree + ". oak: " + oak + ". yew: " + yew + ".");
+    }
+
+    @Override
+    public void onExit() {
+        long endTime = System.currentTimeMillis();
+        long runtime = (endTime - startTime) / (1000 * 60);
+        webhook.sendMessage(playerName + " has been exited script after " + runtime + " minutes.");
     }
 
     private Tile returnTreeSpot(List<Tile> treeList) {
@@ -155,6 +174,10 @@ public class WoodCutter extends AbstractScript {
             Sleep.sleepUntil(() -> tree.interact("Chop down"), 5000);
             Sleep.sleepUntil(() -> !tree.exists() || Inventory.isFull(), 30000);
             if (Inventory.isFull()) {
+                inventories += 1;
+                if (inventories % 10 == 0) {
+                    webhook.sendMessage(playerName + " completed " + inventories + " inventories.");
+                }
                 Logger.log("WALKING_TO_BANK");
                 state = State.WALKING_TO_BANK;
             }
