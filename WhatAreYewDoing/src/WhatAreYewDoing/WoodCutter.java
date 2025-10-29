@@ -1,5 +1,7 @@
 package WhatAreYewDoing;
 
+import org.dreambot.api.Client;
+import org.dreambot.api.data.GameState;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -16,6 +18,7 @@ import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
+import org.dreambot.api.wrappers.interactive.Player;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -63,11 +66,39 @@ public class WoodCutter extends AbstractScript {
     private final String webhook_url = "https://discord.com/api/webhooks/1432171424512217139/E3AwwCdQS6f2vGAf_9k5T65m7SScnc2LNVH5zpHKYrMm9lApA_GpiJIYAouajelmyhFe";
     private long startTime;
     private int inventories = 0;
+    private int startExp;
+
+    @Override
+    public void onStart(String... params) {
+        Logger.log("Script started with quickstart.");
+        for (String param : params) {
+            Logger.log("Examining parameter: " + param);
+            switch (param) {
+                case "tree":
+                    tree = true;
+                    break;
+                case "oak":
+                    oak = true;
+                    break;
+                case "yew":
+                    yew = true;
+                    break;
+                default:
+                    Logger.log("Unknown parameter: " + param);
+                    break;
+            }
+        }
+
+        Logger.log("tree: " + tree + ". oak: " + oak + ". yew: " + yew + ".");
+
+        startExp = Skills.getExperience(Skill.WOODCUTTING);
+        startTime = System.currentTimeMillis();
+        webhook = new DiscordWebhook(webhook_url);
+    }
 
     @Override
     public void onStart() {
-        startTime = System.currentTimeMillis();
-        webhook = new DiscordWebhook(webhook_url);
+        Logger.log("Script started without quickstart.");
         YewGUI gui = new YewGUI();
         gui.sleepUntilConfirmed();
 
@@ -75,14 +106,36 @@ public class WoodCutter extends AbstractScript {
         oak = gui.getOak();
         yew = gui.getYew();
 
-        Logger.log("tree: " + tree + ". oak: " + oak + ". yew: " + yew + ".");
+        startTime = System.currentTimeMillis();
+        webhook = new DiscordWebhook(webhook_url);
+    }
+
+    private int initialize() {
+        Logger.log("Sleeping until handlers are done.");
+        if (Client.getGameState() != GameState.LOGGED_IN
+                || !Players.getLocal().exists()) {
+            Logger.log("Waiting for login/welcome screen handlers...");
+            return -1;
+        }
+        startExp = Skills.getExperience(Skill.WOODCUTTING);
+        Logger.log("Starting script...");
+        Logger.log("Current woodcutting skill: " + Skills.getRealLevel(Skill.WOODCUTTING));
+        updateTreeAndAxe();
+        if (Inventory.contains(axe_name)) {
+            state = State.WALKING_TO_TREE;
+        }
+        Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ", state: " + state + ".");
+        return 1;
     }
 
     @Override
     public void onExit() {
         long endTime = System.currentTimeMillis();
         long runtime = (endTime - startTime) / (1000 * 60);
-        webhook.sendMessage("A user has exited OTS Woodcutting after " + runtime + " minutes.");
+        int totalExp = Skills.getExperience(Skill.WOODCUTTING) - startExp;
+        if (runtime > 10) {
+            webhook.sendMessage("A user has exited OTS Woodcutting after " + runtime + " minutes, gaining " + totalExp + " experience.");
+        }
     }
 
     private Tile returnTreeSpot(List<Tile> treeList) {
@@ -103,21 +156,12 @@ public class WoodCutter extends AbstractScript {
         return -1;
     }
 
-    private void initialize() {
-        Logger.log("Starting script...");
-        Logger.log("Current woodcutting skill: " + Skills.getRealLevel(Skill.WOODCUTTING));
-        updateTreeAndAxe();
-        if (Inventory.contains(axe_name)) {
-            state = State.WALKING_TO_TREE;
-        }
-        Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ", state: " + state + ".");
-    }
-
     @Override
     public int onLoop() {
         if (!initialized) {
-            initialize();
-            initialized = true;
+            if (initialize() == 1) {
+                initialized = true;
+            }
         } else {
             switch (state) {
                 case WALKING_TO_BANK:
@@ -246,6 +290,7 @@ public class WoodCutter extends AbstractScript {
 
         // see if user has set tree
         if (yew || oak || tree) {
+            Logger.log("Setting custom tree.");
             if (yew) {
                 tree_name = "Yew tree";
                 destination = returnTreeSpot(yewTreeSpots);
