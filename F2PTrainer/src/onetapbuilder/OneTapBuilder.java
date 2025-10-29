@@ -19,7 +19,6 @@ import org.dreambot.api.wrappers.items.Item;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
-import java.util.stream.Collectors;
 
 @ScriptManifest(name = "[One Tap] F2P Account Builder", description = "Main controller to run the other scripts.", author = "sawyerm",
         version = 1.0, category = Category.MISC)
@@ -36,13 +35,14 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static boolean canCast = true;
 
-    public final static String axe_name = null;
-
     private static Map<String, Integer> neededItems = new HashMap<>();
     private static Map<String, Integer> orderedItems = new HashMap<>();
+    private static Map<String, List<String>> taskRequiredItems = new HashMap<>();
 
     public static final Tile geTile = new Tile(3162, 3487);
     private static int gold = 0;
+    private static boolean needGold = false;
+    public static boolean needToBuyAxe = false;
 
 
     @Override
@@ -51,8 +51,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         setInventoryLimits();
         addInventory();
         setFailLimit(3);
-        addNeededItem("Feather", 100);
-        addNodes(new ItemBuyer(), new Fisher());
+        addNodes(new ItemBuyer(), new TreeCutter());
     }
 
     private void addInventory() {
@@ -103,8 +102,18 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static boolean valid(String task) {
         if (task.equals("ItemBuyer")) {
-            return !neededItems.isEmpty() || !orderedItems.isEmpty();
+            return (!neededItems.isEmpty() || !orderedItems.isEmpty()) && !needGold;
+        } else if (task.equals("BonesCollector")) {
+            return defaultValidCheck(task) && needGold;
         }
+        return defaultValidCheck(task);
+    }
+
+    private static boolean defaultValidCheck(String task) {
+        return taskRequiresItems(task) && checkTasksInventory(task);
+    }
+
+    private static boolean checkTasksInventory(String task) {
         return !atInventoryLimit() && inventories.get(task) < inventory_limits.get(task);
     }
 
@@ -128,6 +137,11 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
             neededItems.put(itemName, neededItems.get(itemName) + amount);
         } else {
             neededItems.put(itemName, amount);
+        }
+        if (taskRequiredItems.containsKey(itemName)) {
+            taskRequiredItems.get(itemName).add(itemName);
+        }  else {
+            taskRequiredItems.put(itemName, new ArrayList<>());
         }
     }
 
@@ -153,18 +167,17 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static void removeOrderedItem(String itemName) {
         orderedItems.remove(itemName);
+        removeTaskRequiredItems(itemName);
     }
 
-    public static void removeNeededItem(String itemName) {
-        neededItems.remove(itemName);
+    private static void removeTaskRequiredItems(String itemName) {
+        for (String key : taskRequiredItems.keySet()) {
+            taskRequiredItems.get(key).remove(itemName);
+        }
     }
 
     public static Iterator<Map.Entry<String, Integer>> neededItems() {
         return neededItems.entrySet().iterator();
-    }
-
-    public static boolean areNeededItems() {
-        return !neededItems.isEmpty();
     }
 
     public static boolean areOrderedItems() {
@@ -211,5 +224,9 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     @Override
     public void onInventoryItemChanged(Item incoming, Item existing) {
         ItemBuyer.onInventoryItemChanged(incoming, existing);
+    }
+
+    private static boolean taskRequiresItems(String taskName) {
+        return !taskRequiredItems.containsKey(taskName) || taskRequiredItems.get(taskName).isEmpty();
     }
 }
