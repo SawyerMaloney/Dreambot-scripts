@@ -133,7 +133,6 @@ public class TreeCutter extends TaskNode {
                 } else {
                     Logger.log("Need axe " + axe_name + ". Adding to needed items.");
                     OneTapBuilder.addNeededItem(axe_name, 1);
-                    OneTapBuilder.needToBuyAxe = true;
                 }
             }
             Sleep.sleepUntil(() -> Inventory.contains(axe_name), 5000);

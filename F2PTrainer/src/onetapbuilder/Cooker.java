@@ -23,7 +23,7 @@ public class Cooker extends TaskNode {
     private final Tile bank_tile = new Tile(3094, 3489);
     private final Tile stove_tile = new Tile(3078, 3495);
     private boolean initialized = false;
-    private List<String> fishNames = new ArrayList<>();
+    private final List<String> fishNames = new ArrayList<>();
     private boolean atBank = false;
 
     private boolean setupInventory = false;

@@ -15,6 +15,7 @@ import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.Locatable;
 import org.dreambot.api.wrappers.items.Item;
+import org.dreambot.api.utilities.Timer;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -42,8 +43,9 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     public static final Tile geTile = new Tile(3162, 3487);
     private static int gold = 0;
     private static boolean needGold = false;
-    public static boolean needToBuyAxe = false;
-
+    public static boolean init;
+    private final long task_length = 60_000;
+    private final Timer timer = new Timer(task_length);
 
     @Override
     public void onStart() {
@@ -51,7 +53,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         setInventoryLimits();
         addInventory();
         setFailLimit(3);
-        addNodes(new ItemBuyer(), new TreeCutter());
+        addNodes(new Init(), new ItemBuyer(), new Fisher());
     }
 
     private void addInventory() {
@@ -105,6 +107,8 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
             return (!neededItems.isEmpty() || !orderedItems.isEmpty()) && !needGold;
         } else if (task.equals("BonesCollector")) {
             return defaultValidCheck(task) && needGold;
+        } else if (task.equals("Init")) {
+            return !init;
         }
         return defaultValidCheck(task);
     }
