@@ -1,4 +1,4 @@
-package onetapbuilder;
+package RunecrafterAbstractScript;
 
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -8,13 +8,19 @@ import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.walking.impl.Walking;
-import org.dreambot.api.script.TaskNode;
+import org.dreambot.api.script.AbstractScript;
+import org.dreambot.api.script.Category;
+import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.items.Item;
 
-public class Runecrafter extends TaskNode {
+@ScriptManifest(name = "Example Runecrafting Dreambot Script", description = "Check me out @sawyerm on dreambot!.", author = "sawyerm",
+        version = 1.0, category = Category.MISC)
+
+
+public class RunecrafterAbstractScript extends AbstractScript {
     private enum State {WALK_TO_BANK, BANKING, WALK_TO_ALTAR, USE_RUINS, CRAFT, LEAVE_RUINS}
     private final Tile air_altar_tile = new Tile(2987, 3292);
     private final Tile falador_bank_tile = new Tile(3012, 3355);
@@ -31,22 +37,15 @@ public class Runecrafter extends TaskNode {
     String tiara_name = "Air tiara";
     String talisman_name = "Air talisman";
 
-    private boolean initialized = false;
-
     private State state = State.WALK_TO_BANK;
 
     @Override
-    public boolean accept() {
-        return OneTapBuilder.valid("Runecrafter");
+    public void onStart() {
+        chooseRune();
     }
 
     @Override
-    public int execute() {
-        if (!initialized) {
-            chooseRune();
-            initialized = true;
-        }
-
+    public int onLoop() {
         switch (state) {
             case WALK_TO_BANK:
                 return walk_to_bank();
@@ -93,7 +92,6 @@ public class Runecrafter extends TaskNode {
         if ((portal != null && portal.exists() && portal.interact()) || altar_tile.distance() < 10) {
             Sleep.sleepUntil(() -> altar_tile.distance() < 10, 5000);
             if (altar_tile.distance() < 10) {
-                OneTapBuilder.updateInventories("Runecrafter");
                 Logger.log("WALK_TO_BANK");
                 state = State.WALK_TO_BANK;
             } else {
@@ -175,22 +173,21 @@ public class Runecrafter extends TaskNode {
             if (!Inventory.contains(tiara_name) && !Inventory.contains(talisman_name) && !Equipment.contains(tiara_name)) {
                 if (Bank.contains(tiara_name)) {
                     Logger.log("Retrieving " + tiara_name + ".");
-                    OneTapBuilder.retrieveItem(tiara_name, false);
-                    Sleep.sleepUntil(() -> Inventory.contains(tiara_name), 1500);
-                    Item air_tiara = Inventory.get(tiara_name);
-                    if (air_tiara != null) {
-                        air_tiara.interact("Wear");
+                    retrieveItem(tiara_name, false);
+                    Item tiara = Inventory.get(tiara_name);
+                    if (tiara != null) {
+                        tiara.interact("Wear");
                     }
                 } else if (Bank.contains(talisman_name)) {
                     Logger.log("Retrieving " +  talisman_name + ".");
-                    OneTapBuilder.retrieveItem(talisman_name, false);
+                    retrieveItem(talisman_name, false);
                 } else {
                     Logger.log("Doesn't have talisman or tiara");
                     return -1;
                 }
             }
             if (Bank.contains("Pure essence")) {
-                OneTapBuilder.retrieveItem("Pure essence", true);
+                retrieveItem("Pure essence", true);
                 Logger.log("WALK_TO_ALTAR");
                 state = State.WALK_TO_ALTAR;
             } else {
@@ -199,5 +196,19 @@ public class Runecrafter extends TaskNode {
             }
         }
         return 500;
+    }
+
+    public static int retrieveItem(String item, boolean all) {
+        if (all) {
+            Sleep.sleepUntil(() -> Bank.withdrawAll(item), 5000);
+        } else {
+            Sleep.sleepUntil(() -> Bank.withdraw(item), 5000);
+        }
+        Sleep.sleepUntil(() -> Inventory.contains(item), 5000);
+        if (!Inventory.contains(item)) {
+            Logger.log("Failed to get item " + item);
+            return -1;
+        }
+        return 1;
     }
 }
