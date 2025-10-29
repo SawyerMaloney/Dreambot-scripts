@@ -36,8 +36,6 @@ public class Firemaker extends TaskNode {
     private String logName = "";
     private State state = State.WALKING_TO_BANK;
 
-    private final Tile geTile = new Tile(3162, 3487);
-
     private GameObject fire;
 
     private final List<String> logNames = Arrays.asList("Yew logs", "Maple logs", "Willow logs", "Oak logs", "Logs");
@@ -154,9 +152,9 @@ public class Firemaker extends TaskNode {
 
     private int walkToBank() {
         setLogName();
-        if (geTile.distance() > 10) {
+        if (OneTapBuilder.geTile.distance() > 10) {
             if (Walking.shouldWalk()) {
-                Walking.walk(geTile);
+                Walking.walk(OneTapBuilder.geTile);
             }
         } else {
             Logger.log("RETRIEVE_WOOD");
@@ -170,7 +168,7 @@ public class Firemaker extends TaskNode {
             if (!Inventory.contains("Tinderbox")) {
                 if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
                     Logger.error("Failed to withdraw tinderbox.");
-                    OneTapBuilder.addNeededItem(new AbstractMap.SimpleEntry<>("Tinderbox", 1));
+                    OneTapBuilder.addNeededItem("Tinderbox", 1);
                     return 500;
                 }
                 if (!Sleep.sleepUntil(() -> Inventory.contains("Tinderbox"), 5000)) {
@@ -189,7 +187,7 @@ public class Firemaker extends TaskNode {
                 Logger.log("Failed to withdraw logs " + logName + ".");
                 if (!Bank.contains(logName)) {
                     // TODO get exact number of logs needed so we don't overbuy
-                    OneTapBuilder.addNeededItem(new AbstractMap.SimpleEntry<>(logName, 100));
+                    OneTapBuilder.addNeededItem(logName, 100);
                     logName = stepDownOneLog();
                     if (logName.isEmpty()) {
                         Logger.log("No usable logs.");

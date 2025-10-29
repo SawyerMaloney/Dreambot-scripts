@@ -10,9 +10,11 @@ import org.dreambot.api.methods.widget.Widgets;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.impl.TaskScript;
+import org.dreambot.api.script.listener.ItemContainerListener;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.Locatable;
+import org.dreambot.api.wrappers.items.Item;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
         version = 1.0, category = Category.MISC)
 
 
-public class OneTapBuilder extends TaskScript {
+public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static int inventory_limit = 50;
 
@@ -36,7 +38,12 @@ public class OneTapBuilder extends TaskScript {
 
     public final static String axe_name = null;
 
-    private static List<Map.Entry<String, Integer>> neededItems = new ArrayList<>();
+    private static Map<String, Integer> neededItems = new HashMap<>();
+    private static Map<String, Integer> orderedItems = new HashMap<>();
+
+    public static final Tile geTile = new Tile(3162, 3487);
+    private static int gold = 0;
+
 
     @Override
     public void onStart() {
@@ -44,7 +51,8 @@ public class OneTapBuilder extends TaskScript {
         setInventoryLimits();
         addInventory();
         setFailLimit(3);
-        addNodes(new Firemaker());
+        addNeededItem("Feather", 100);
+        addNodes(new ItemBuyer(), new Fisher());
     }
 
     private void addInventory() {
@@ -94,6 +102,9 @@ public class OneTapBuilder extends TaskScript {
     }
 
     public static boolean valid(String task) {
+        if (task.equals("ItemBuyer")) {
+            return !neededItems.isEmpty() || !orderedItems.isEmpty();
+        }
         return !atInventoryLimit() && inventories.get(task) < inventory_limits.get(task);
     }
 
@@ -111,10 +122,53 @@ public class OneTapBuilder extends TaskScript {
         return 1;
     }
 
-    public static boolean addNeededItem(Map.Entry<String, Integer> item) {
-        Logger.log("Adding needed item: " + item.getKey() + ".");
-        neededItems.add(item);
+    public static void addNeededItem(String itemName, int amount) {
+        Logger.log("Adding needed item: " + itemName + " ("+amount+").");
+        if (neededItems.containsKey(itemName)) {
+            neededItems.put(itemName, neededItems.get(itemName) + amount);
+        } else {
+            neededItems.put(itemName, amount);
+        }
+    }
+
+    public static boolean addOrderedItem(String itemName) {
+        int amount = neededItems.get(itemName);
+        Logger.log("Adding ordered item: " + itemName + " ("+amount+").");
+        if (!neededItems.containsKey(itemName)) {
+            return false;
+        } else {
+            neededItems.remove(itemName);
+        }
+        orderedItems.put(itemName, amount);
         return true;
+    }
+
+    public static boolean isNeededItem(String itemName) {
+        return neededItems.containsKey(itemName);
+    }
+
+    public static boolean isOrderedItem(String itemName) {
+        return orderedItems.containsKey(itemName);
+    }
+
+    public static void removeOrderedItem(String itemName) {
+        orderedItems.remove(itemName);
+    }
+
+    public static void removeNeededItem(String itemName) {
+        neededItems.remove(itemName);
+    }
+
+    public static Iterator<Map.Entry<String, Integer>> neededItems() {
+        return neededItems.entrySet().iterator();
+    }
+
+    public static boolean areNeededItems() {
+        return !neededItems.isEmpty();
+    }
+
+    public static boolean areOrderedItems() {
+        return !orderedItems.isEmpty();
     }
 
     public static boolean sleepWhileAnimating(BooleanSupplier returnPredicate, int timeout, int randomLower, int randomUpper) {
@@ -137,19 +191,25 @@ public class OneTapBuilder extends TaskScript {
         return false;
     }
 
-    public static <T extends Locatable> List<T> getSortedClosest(List<T> locatables) {
-        Tile playerTile = Players.getLocal().getTile();
-        return locatables.stream()
-                .sorted(Comparator.comparingDouble(l -> l.distance(playerTile)))
-                .collect(Collectors.toList());
-    }
-
-    public static <T extends Locatable> T getClosest(List<T> locatables) {
-        List<T> sortedLocatables =  getSortedClosest(locatables);
-        return sortedLocatables.get(0);
-    }
-
     public static boolean isLevelUpVisible() {
         return Widgets.get(233, 1) != null && Widgets.get(233, 1).isVisible();
+    }
+
+    public static int getGoldAmount() {
+        return gold;
+    }
+
+    public static void setGoldAmount(int gold) {
+        OneTapBuilder.gold = gold;
+    }
+
+    @Override
+    public void onInventoryItemAdded(Item item) {
+        ItemBuyer.onInventoryItemAdded(item);
+    }
+
+    @Override
+    public void onInventoryItemChanged(Item incoming, Item existing) {
+        ItemBuyer.onInventoryItemChanged(incoming, existing);
     }
 }
