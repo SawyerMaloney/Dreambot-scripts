@@ -68,7 +68,7 @@ public class Cooker extends TaskNode {
                     // if we don't have anything in our inventory, quit because we have no fish
                     if (Inventory.isEmpty()) {
                         Logger.log("Nothing to cook!");
-                        return -1;
+                        OneTapBuilder.addNeededItem(fishNames.get(0), 100, "Cooker");
                     } else if (inventoryHasRawFood()) {
                         // need this to know that we've reset our inventory fully
                         setupInventory = true;

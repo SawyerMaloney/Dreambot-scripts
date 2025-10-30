@@ -14,6 +14,8 @@ import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.wrappers.interactive.NPC;
 import org.dreambot.api.methods.interactive.Players;
 
+import java.util.List;
+
 public class Fisher extends TaskNode {
     private boolean initialized = false;
 
@@ -40,7 +42,11 @@ public class Fisher extends TaskNode {
     private int retrieveItems() {
         if (Bank.open()) {
             Sleep.sleep(Calculations.random(0, 100));
-            Bank.depositAllExcept("Feather", rod_name);
+            if (feathers) {
+                Bank.depositAllExcept("Feather", rod_name);
+            } else {
+                Bank.depositAllExcept(rod_name);
+            }
             Sleep.sleep(Calculations.random(500, 1000));
             if (OneTapBuilder.retrieveItem(rod_name, false) == -1) return -1;
             Sleep.sleep(Calculations.random(500, 1000));
@@ -101,7 +107,11 @@ public class Fisher extends TaskNode {
 
     private int bankFish() {
         if (Bank.open()) {
-            Bank.depositAllExcept(rod_name, "Feather");
+            if (feathers) {
+                Bank.depositAllExcept(rod_name, "Feather");
+            } else {
+                Bank.depositAllExcept(rod_name);
+            }
         }
 
         return 1000;
@@ -119,6 +129,15 @@ public class Fisher extends TaskNode {
     private void setNames() {
         int fishingSkill = Skills.getRealLevel(Skill.FISHING);
 
+        // check if we need low level fish (and only low level fish)
+        List<String> neededItems = OneTapBuilder.getFishableNeededItems();
+        if (!neededItems.isEmpty()
+            && !neededItems.contains("Raw salmon")
+            && !neededItems.contains("Raw trout")) {
+            return;
+        }
+
+        // if no fish is needed, fish the best we can
         if (fishingSkill >= 20) {
             rod_name = "Fly fishing rod";
             destination = fly_fishing_tile;

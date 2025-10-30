@@ -46,6 +46,8 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     public static boolean init;
     private final long task_length = 60_000;
     private final Timer timer = new Timer(task_length);
+    private static final List<String> gatherableItems = Arrays.asList("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon", "Logs", "Oak logs", "Yew logs");
+    private static final List<String> fishableItems = Arrays.asList("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon");
 
     @Override
     public void onStart() {
@@ -53,6 +55,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         setInventoryLimits();
         addInventory();
         setFailLimit(3);
+        addNeededItem("Raw shrimps", 100, "Blah Blah");
         addNodes(new Init(), new ItemBuyer(), new Fisher());
     }
 
@@ -104,7 +107,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static boolean valid(String task) {
         if (task.equals("ItemBuyer")) {
-            return (!neededItems.isEmpty() || !orderedItems.isEmpty()) && !needGold;
+            return (needsBuyableItems() || !orderedItems.isEmpty()) && !needGold;
         } else if (task.equals("BonesCollector")) {
             return defaultValidCheck(task) && needGold;
         } else if (task.equals("Init")) {
@@ -114,7 +117,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     }
 
     private static boolean defaultValidCheck(String task) {
-        return taskRequiresItems(task) && checkTasksInventory(task);
+        return !taskRequiresItems(task) && checkTasksInventory(task);
     }
 
     private static boolean checkTasksInventory(String task) {
@@ -135,17 +138,18 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         return 1;
     }
 
-    public static void addNeededItem(String itemName, int amount) {
+    public static void addNeededItem(String itemName, int amount, String task) {
         Logger.log("Adding needed item: " + itemName + " ("+amount+").");
         if (neededItems.containsKey(itemName)) {
             neededItems.put(itemName, neededItems.get(itemName) + amount);
         } else {
             neededItems.put(itemName, amount);
         }
-        if (taskRequiredItems.containsKey(itemName)) {
-            taskRequiredItems.get(itemName).add(itemName);
+        if (taskRequiredItems.containsKey(task)) {
+            taskRequiredItems.get(task).add(itemName);
         }  else {
-            taskRequiredItems.put(itemName, new ArrayList<>());
+            taskRequiredItems.put(task, new ArrayList<>());
+            taskRequiredItems.get(task).add(itemName);
         }
     }
 
@@ -186,6 +190,16 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static boolean areOrderedItems() {
         return !orderedItems.isEmpty();
+    }
+
+    private static boolean needsBuyableItems() {
+        List<String> items = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : neededItems.entrySet()) {
+            if (!gatherableItems.contains(entry.getKey())) {
+                items.add(entry.getKey());
+            }
+        }
+        return !items.isEmpty();
     }
 
     public static boolean sleepWhileAnimating(BooleanSupplier returnPredicate, int timeout, int randomLower, int randomUpper) {
@@ -231,6 +245,16 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     }
 
     private static boolean taskRequiresItems(String taskName) {
-        return !taskRequiredItems.containsKey(taskName) || taskRequiredItems.get(taskName).isEmpty();
+        return taskRequiredItems.containsKey(taskName) && !taskRequiredItems.get(taskName).isEmpty();
+    }
+
+    public static List<String> getFishableNeededItems() {
+        List<String> fishableNeededItems = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : neededItems.entrySet()) {
+            if (fishableItems.contains(entry.getKey())) {
+                fishableNeededItems.add(entry.getKey());
+            }
+        }
+        return fishableNeededItems;
     }
 }
