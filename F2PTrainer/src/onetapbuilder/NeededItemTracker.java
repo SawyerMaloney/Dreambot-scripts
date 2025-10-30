@@ -57,6 +57,7 @@ public class NeededItemTracker {
     }
 
     public static void addItemToGather(String itemName, String task) {
+        Logger.log("Adding item to gather: " + itemName + " for task " + task + ".");
         itemsToGather.add(itemName);
         if (taskRequiredItems.containsKey(task)) {
             taskRequiredItems.get(task).add(itemName);
@@ -88,6 +89,7 @@ public class NeededItemTracker {
         List<String> fishableNeededItems = new ArrayList<>();
         for (String item : itemsToGather) {
             if (fishableItems.contains(item)) {
+                Logger.log("adding fishable item " + item + ".");
                 fishableNeededItems.add(item);
             }
         }

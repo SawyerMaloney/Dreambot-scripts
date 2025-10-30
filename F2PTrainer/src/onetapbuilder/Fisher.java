@@ -14,7 +14,9 @@ import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.wrappers.interactive.NPC;
 import org.dreambot.api.methods.interactive.Players;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Fisher extends TaskNode {
     private boolean initialized = false;
@@ -23,13 +25,17 @@ public class Fisher extends TaskNode {
     private final Tile fly_fishing_tile = new Tile(3108, 3433);
     private Tile destination = small_net_tile;
     private boolean fishing = false;
-    private String rod_name = "Small fishing net";
+    private String rod_name = "";
     private boolean feathers = false;
-    private String interact = "Net";
-    private String fishing_spot_name = "Fishing spot";
+    private String interact = "";
+    private String fishing_spot_name = "";
+
+    private static Map<String, Integer> fishLevelRequirements = new HashMap<>();
+    private static Map<String, Tile> fishSpotMap = new HashMap<>();
 
     private void initialize() {
         Logger.log("Starting fishing bot...");
+        setFishMaps();
         setNames();
         Logger.log("Starting script with rod " + rod_name + " and feathers " + feathers + ".");
         initialized = true;
@@ -128,24 +134,49 @@ public class Fisher extends TaskNode {
 
     private void setNames() {
         int fishingSkill = Skills.getRealLevel(Skill.FISHING);
+        int currentReqSkill = 0;
 
-        // check if we need low level fish (and only low level fish)
+        // check if we need to gather a particular fish, and if we have the skill to do so
+        // try to get the highest skill level fish we can, for max XP
         List<String> neededItems = NeededItemTracker.getFishableNeededItems();
-        if (!neededItems.isEmpty()
-            && !neededItems.contains("Raw salmon")
-            && !neededItems.contains("Raw trout")) {
-            return;
-        }
-
-        // if no fish is needed, fish the best we can
-        if (fishingSkill >= 20) {
-            rod_name = "Fly fishing rod";
-            destination = fly_fishing_tile;
-            feathers = true;
-            fishing_spot_name = "Rod fishing spot";
-            interact = "Lure";
+        if (!neededItems.isEmpty()) {
+            // check if we can fish them
+            for (String fish : neededItems) {
+                if (fishingSkill >= fishLevelRequirements.get(fish) && fishLevelRequirements.get(fish) > currentReqSkill) {
+                    destination = fishSpotMap.get(fish);
+                    currentReqSkill = fishLevelRequirements.get(fish);
+                    if (destination == fly_fishing_tile) {
+                        rod_name = "Fly fishing rod";
+                        feathers = true;
+                        interact = "Lure";
+                    } else {
+                        rod_name = "Small fishing net";
+                        feathers = false;
+                        interact = "Net";
+                    }
+                }
+            }
+        } else {
+            // if no fish is needed, fish the best we can
+            if (fishingSkill >= 20) {
+                rod_name = "Fly fishing rod";
+                destination = fly_fishing_tile;
+                feathers = true;
+                fishing_spot_name = "Rod fishing spot";
+                interact = "Lure";
+            }
         }
     }
 
+    private void setFishMaps() {
+        fishLevelRequirements.put("Raw shrimps", 1);
+        fishLevelRequirements.put("Raw anchovies", 1);
+        fishLevelRequirements.put("Raw trout", 20);
+        fishLevelRequirements.put("Raw salmon", 30);
 
+        fishSpotMap.put("Raw shrimps", small_net_tile);
+        fishSpotMap.put("Raw anchovies", small_net_tile);
+        fishSpotMap.put("Raw trout", fly_fishing_tile);
+        fishSpotMap.put("Raw salmon", fly_fishing_tile);
+    }
 }
