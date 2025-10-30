@@ -30,13 +30,13 @@ public class Cooker extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Cooker");
+        return TaskScheduler.valid("Cooker");
     }
 
     @Override
     public int execute() {
         if (!hasCookableItems()) {
-            OneTapBuilder.addItemToGather(fishNames.get(0), "Cooker");
+            NeededItemTracker.addItemToGather(fishNames.get(0), "Cooker");
         }
         if (!initialized) {
             findBestFish();
@@ -60,7 +60,7 @@ public class Cooker extends TaskNode {
                     for (String fishName : fishNames) {
                         if (!Inventory.isFull() && Bank.contains(fishName)) {
                             Logger.log("Found fish: " + fishName);
-                            OneTapBuilder.retrieveItem(fishName, true);
+                            BotUtils.retrieveItem(fishName, true);
                             Sleep.sleep(Calculations.random(1000, 1500));
                         } else {
                             if (!Inventory.isFull()) {
@@ -71,7 +71,7 @@ public class Cooker extends TaskNode {
                     // if we don't have anything in our inventory, quit because we have no fish
                     if (Inventory.isEmpty()) {
                         Logger.log("Nothing to cook!");
-                        OneTapBuilder.addItemToBuy(fishNames.get(0), 100, "Cooker");
+                        NeededItemTracker.addItemToBuy(fishNames.get(0), 100, "Cooker");
                     } else if (inventoryHasRawFood()) {
                         // need this to know that we've reset our inventory fully
                         setupInventory = true;
@@ -101,7 +101,7 @@ public class Cooker extends TaskNode {
                                 WidgetChild cookWidget = Widgets.get(270, 15);
                                 if (cookWidget != null && cookWidget.interact()) {
                                     Logger.log("Started cooking all.");
-                                    OneTapBuilder.sleepWhileAnimating(this::inventoryHasRawFood, 60000, 3000, 10000);
+                                    BotUtils.sleepWhileAnimating(this::inventoryHasRawFood, 60000, 3000, 10000);
                                     Logger.log("sleepWhile cooking loop broke.");
                                     if (!inventoryHasRawFood()) {
                                         // really done cooking

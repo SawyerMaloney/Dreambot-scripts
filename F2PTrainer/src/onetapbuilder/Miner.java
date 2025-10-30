@@ -35,7 +35,7 @@ public class Miner extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Miner");
+        return TaskScheduler.valid("Miner");
     }
 
     @Override
@@ -51,7 +51,7 @@ public class Miner extends TaskNode {
             } else if (status == 1) {  // we have the correct pickaxe; otherwise, we are getting it
                 if (Inventory.isFull()) {
                     Inventory.dropAll("Tin ore", "Iron ore");
-                    OneTapBuilder.updateInventories("Miner");
+                    InventoryManager.updateInventories("Miner");
                 }
                 if (destination.distance() > 1) {
                     Walking.walk(destination);

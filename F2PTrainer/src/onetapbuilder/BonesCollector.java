@@ -1,5 +1,6 @@
 package onetapbuilder;
 
+import org.apache.tools.ant.Task;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.item.GroundItems;
@@ -22,7 +23,7 @@ public class BonesCollector extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("BonesCollector");
+        return TaskScheduler.valid("BonesCollector");
     }
 
     @Override

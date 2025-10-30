@@ -40,7 +40,7 @@ public class Firemaker extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Firemaker") && hasBurnableItems();
+        return TaskScheduler.valid("Firemaker") && hasBurnableItems();
     }
 
     @Override
@@ -79,7 +79,7 @@ public class Firemaker extends TaskNode {
         if (tinderbox != null) {
             Logger.log("Got tinderbox. Using on " + logName + ".");
             tinderbox.useOn(logName);
-            OneTapBuilder.sleepWhileAnimating(() -> true, 10000, 500, 1000);
+            BotUtils.sleepWhileAnimating(() -> true, 10000, 500, 1000);
             fire = GameObjects.closest("Fire");
             Logger.log("BURN_WOOD");
             state = State.BURN_WOOD;
@@ -132,7 +132,7 @@ public class Firemaker extends TaskNode {
             WidgetChild burn = Widgets.get(270, 15);
             if (burn != null && burn.interact()) {
                 Logger.log("Sleep on animating.");
-                if (OneTapBuilder.sleepWhileAnimating(() -> Inventory.contains(logName) && !OneTapBuilder.isLevelUpVisible(), 30000, 500, 1000)) {
+                if (BotUtils.sleepWhileAnimating(() -> Inventory.contains(logName) && !BotUtils.isLevelUpVisible(), 30000, 500, 1000)) {
                     Logger.log("while statement evaluated to false.");
                 } else {
                     Logger.log("Timeout hit.");
@@ -165,7 +165,7 @@ public class Firemaker extends TaskNode {
             if (!Inventory.contains("Tinderbox")) {
                 if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
                     Logger.error("Failed to withdraw tinderbox.");
-                    OneTapBuilder.addItemToBuy("Tinderbox", 1, "Firemaker");
+                    NeededItemTracker.addItemToBuy("Tinderbox", 1, "Firemaker");
                     return 500;
                 }
                 if (!Sleep.sleepUntil(() -> Inventory.contains("Tinderbox"), 5000)) {
@@ -184,7 +184,7 @@ public class Firemaker extends TaskNode {
                 Logger.log("Failed to withdraw logs " + logName + ".");
                 if (!Bank.contains(logName)) {
                     // TODO get exact number of logs needed so we don't overbuy
-                    OneTapBuilder.addItemToBuy(logName, 100, "Firemaker");
+                    NeededItemTracker.addItemToBuy(logName, 100, "Firemaker");
                     logName = stepDownOneLog();
                     if (logName.isEmpty()) {
                         Logger.log("No usable logs.");
@@ -216,7 +216,7 @@ public class Firemaker extends TaskNode {
         List<GameObject> gos = GameObjects.all();
         List<Player> players = Players.all();
         Tile localTile = Players.getLocal().getTile();
-        if (OneTapBuilder.anyOnTile(gos, localTile) || OneTapBuilder.anyOnTile(players, localTile)) {
+        if (BotUtils.anyOnTile(gos, localTile) || BotUtils.anyOnTile(players, localTile)) {
             Logger.log("Tile occupied.");
             Tile newTile;
             if (Calculations.random(0, 2) == 0) {

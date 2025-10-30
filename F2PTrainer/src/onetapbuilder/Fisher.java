@@ -36,7 +36,7 @@ public class Fisher extends TaskNode {
     }
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Fisher");
+        return TaskScheduler.valid("Fisher");
     }
 
     private int retrieveItems() {
@@ -48,10 +48,10 @@ public class Fisher extends TaskNode {
                 Bank.depositAllExcept(rod_name);
             }
             Sleep.sleep(Calculations.random(500, 1000));
-            if (OneTapBuilder.retrieveItem(rod_name, false) == -1) return -1;
+            if (BotUtils.retrieveItem(rod_name, false) == -1) return -1;
             Sleep.sleep(Calculations.random(500, 1000));
             if (feathers) {
-                if (OneTapBuilder.retrieveItem("Feather", true) == -1) return -1;
+                if (BotUtils.retrieveItem("Feather", true) == -1) return -1;
                 Sleep.sleep(Calculations.random(500, 1000));
             }
         }
@@ -130,7 +130,7 @@ public class Fisher extends TaskNode {
         int fishingSkill = Skills.getRealLevel(Skill.FISHING);
 
         // check if we need low level fish (and only low level fish)
-        List<String> neededItems = OneTapBuilder.getFishableNeededItems();
+        List<String> neededItems = NeededItemTracker.getFishableNeededItems();
         if (!neededItems.isEmpty()
             && !neededItems.contains("Raw salmon")
             && !neededItems.contains("Raw trout")) {

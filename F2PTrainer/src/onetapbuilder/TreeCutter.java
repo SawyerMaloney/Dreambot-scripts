@@ -50,7 +50,7 @@ public class TreeCutter extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("TreeCutter");
+        return TaskScheduler.valid("TreeCutter");
     }
 
     private int initialize() {
@@ -131,7 +131,7 @@ public class TreeCutter extends TaskNode {
                     Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
                 } else {
                     Logger.log("Need axe " + axe_name + ". Adding to needed items.");
-                    OneTapBuilder.addItemToBuy(axe_name, 1, "TreeCutter");
+                    NeededItemTracker.addItemToBuy(axe_name, 1, "TreeCutter");
                 }
             }
             Sleep.sleepUntil(() -> Inventory.contains(axe_name), 5000);

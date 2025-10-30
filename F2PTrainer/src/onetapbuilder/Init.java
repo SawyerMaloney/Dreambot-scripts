@@ -8,14 +8,14 @@ import org.dreambot.api.utilities.Logger;
 public class Init extends TaskNode {
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Init");
+        return TaskScheduler.valid("Init");
     }
 
     @Override
     public int execute() {
         if (Bank.open()) {
             Logger.log("Init complete.");
-            OneTapBuilder.init = true;
+            TaskScheduler.init = true;
         }
         return 500;
     }

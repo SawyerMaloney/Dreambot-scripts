@@ -29,7 +29,7 @@ public class ItemBuyer extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("ItemBuyer");
+        return TaskScheduler.valid("ItemBuyer");
     }
 
     @Override
@@ -50,7 +50,7 @@ public class ItemBuyer extends TaskNode {
     }
 
     private int waitForOrders() {
-        if (!OneTapBuilder.areOrderedItems()) {
+        if (!NeededItemTracker.areOrderedItems()) {
             Logger.log("No items to collect left.");
             return 500;
         }
@@ -69,7 +69,7 @@ public class ItemBuyer extends TaskNode {
     }
 
     private int placeOrder() {
-        Iterator<Map.Entry<String, Integer>> iter = OneTapBuilder.neededItems();
+        Iterator<Map.Entry<String, Integer>> iter = NeededItemTracker.neededItems();
         while (iter.hasNext() && GrandExchange.getFirstOpenSlot() != -1) {
             Map.Entry<String, Integer> item = iter.next();
             String itemName = item.getKey();
@@ -80,7 +80,7 @@ public class ItemBuyer extends TaskNode {
 
             if (Sleep.sleepUntil(() -> GrandExchange.buyItem(itemName, amount, newPrice), 10000)) {
                 Logger.log("Order placed for " + itemName + " (" + amount + ") @ " + newPrice + " gp each.");
-                OneTapBuilder.addOrderedItem(itemName);
+                NeededItemTracker.addOrderedItem(itemName);
             } else {
                 Logger.log("Failed to put in buy order for " + itemName +".");
             }
@@ -138,9 +138,9 @@ public class ItemBuyer extends TaskNode {
 
     public static void onInventoryItemAdded(Item item) {
         if (state == State.WAIT_FOR_ORDERS) {
-            if (OneTapBuilder.isOrderedItem(item.getName())) {
+            if (NeededItemTracker.isOrderedItem(item.getName())) {
                 Logger.log("Item " + item.getName() + " removed from ordered items.");
-                OneTapBuilder.removeOrderedItem(item.getName());
+                NeededItemTracker.removeOrderedItem(item.getName());
             }
         }
     }
@@ -148,9 +148,9 @@ public class ItemBuyer extends TaskNode {
 
     public static void onInventoryItemChanged(Item incoming, Item existing) {
         if (state == State.WAIT_FOR_ORDERS) {
-            if (OneTapBuilder.isOrderedItem(existing.getName())) {
+            if (NeededItemTracker.isOrderedItem(existing.getName())) {
                 Logger.log("Item " + existing.getName() + " removed from ordered items.");
-                OneTapBuilder.removeOrderedItem(existing.getName());
+                NeededItemTracker.removeOrderedItem(existing.getName());
             }
         }
     }

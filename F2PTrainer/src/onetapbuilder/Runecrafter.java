@@ -37,7 +37,7 @@ public class Runecrafter extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Runecrafter");
+        return TaskScheduler.valid("Runecrafter");
     }
 
     @Override
@@ -93,7 +93,7 @@ public class Runecrafter extends TaskNode {
         if ((portal != null && portal.exists() && portal.interact()) || altar_tile.distance() < 10) {
             Sleep.sleepUntil(() -> altar_tile.distance() < 10, 5000);
             if (altar_tile.distance() < 10) {
-                OneTapBuilder.updateInventories("Runecrafter");
+                InventoryManager.updateInventories("Runecrafter");
                 Logger.log("WALK_TO_BANK");
                 state = State.WALK_TO_BANK;
             } else {
@@ -175,7 +175,7 @@ public class Runecrafter extends TaskNode {
             if (!Inventory.contains(tiara_name) && !Inventory.contains(talisman_name) && !Equipment.contains(tiara_name)) {
                 if (Bank.contains(tiara_name)) {
                     Logger.log("Retrieving " + tiara_name + ".");
-                    OneTapBuilder.retrieveItem(tiara_name, false);
+                    BotUtils.retrieveItem(tiara_name, false);
                     Sleep.sleepUntil(() -> Inventory.contains(tiara_name), 1500);
                     Item air_tiara = Inventory.get(tiara_name);
                     if (air_tiara != null) {
@@ -183,14 +183,14 @@ public class Runecrafter extends TaskNode {
                     }
                 } else if (Bank.contains(talisman_name)) {
                     Logger.log("Retrieving " +  talisman_name + ".");
-                    OneTapBuilder.retrieveItem(talisman_name, false);
+                    BotUtils.retrieveItem(talisman_name, false);
                 } else {
                     Logger.log("Doesn't have talisman or tiara");
                     return -1;
                 }
             }
             if (Bank.contains("Pure essence")) {
-                OneTapBuilder.retrieveItem("Pure essence", true);
+                BotUtils.retrieveItem("Pure essence", true);
                 Logger.log("WALK_TO_ALTAR");
                 state = State.WALK_TO_ALTAR;
             } else {
