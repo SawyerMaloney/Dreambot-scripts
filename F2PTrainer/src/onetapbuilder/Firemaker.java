@@ -165,7 +165,7 @@ public class Firemaker extends TaskNode {
             if (!Inventory.contains("Tinderbox")) {
                 if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
                     Logger.error("Failed to withdraw tinderbox.");
-                    OneTapBuilder.addNeededItem("Tinderbox", 1, "Firemaker");
+                    OneTapBuilder.addItemToBuy("Tinderbox", 1, "Firemaker");
                     return 500;
                 }
                 if (!Sleep.sleepUntil(() -> Inventory.contains("Tinderbox"), 5000)) {
@@ -184,11 +184,10 @@ public class Firemaker extends TaskNode {
                 Logger.log("Failed to withdraw logs " + logName + ".");
                 if (!Bank.contains(logName)) {
                     // TODO get exact number of logs needed so we don't overbuy
-                    OneTapBuilder.addNeededItem(logName, 100, "Firemaker");
+                    OneTapBuilder.addItemToBuy(logName, 100, "Firemaker");
                     logName = stepDownOneLog();
                     if (logName.isEmpty()) {
                         Logger.log("No usable logs.");
-                        // TODO trigger something in OneTap's activate
                     }
                 }
             }

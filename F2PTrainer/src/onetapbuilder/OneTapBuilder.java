@@ -16,6 +16,7 @@ import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.Locatable;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.utilities.Timer;
+import org.dreambot.api.wrappers.widgets.WidgetChild;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,13 +37,19 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static boolean canCast = true;
 
-    private static Map<String, Integer> neededItems = new HashMap<>();
-    private static Map<String, Integer> orderedItems = new HashMap<>();
-    private static Map<String, List<String>> taskRequiredItems = new HashMap<>();
+    // Maps for ItemBuyer, tracking items we need to place orders for,
+    // and items we already have placed orders for.
+    private final static Map<String, Integer> itemsToBuy = new HashMap<>();
+    private final static Map<String, Integer> orderedItems = new HashMap<>();
+    // gather from other scripts. No amount, will just do it for one task length
+    // so maps to the task name
+    private final static List<String> itemsToGather = new ArrayList<>();
+    // Map that allows us to block execution for scripts that have items we're yet to get
+    private final static Map<String, List<String>> taskRequiredItems = new HashMap<>();
 
     public static final Tile geTile = new Tile(3162, 3487);
     private static int gold = 0;
-    private static boolean needGold = false;
+    private final static boolean needGold = false;
     public static boolean init;
     private final long task_length = 60_000;
     private final Timer timer = new Timer(task_length);
@@ -56,7 +63,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         setInventoryLimits();
         addInventory();
         setFailLimit(3);
-        addNeededItem("Raw shrimps", 30, "Blah Blah");
+        addItemToBuy("Raw shrimps", 30, "Blah Blah");
         addNodes(new Init(), new ItemBuyer(), new Cooker(), new Fisher());
     }
 
@@ -73,7 +80,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     private void setInventoryLimits() {
         Logger.log("Setting inventory limits.");
-        inventory_limits.put("Fisher", individual_inventory_limit);
+        inventory_limits.put("Fisher", 3);
         inventory_limits.put("Miner", individual_inventory_limit);
         inventory_limits.put("Cooker", individual_inventory_limit);
         inventory_limits.put("Runecrafter", individual_inventory_limit);
@@ -107,14 +114,16 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     }
 
     public static boolean valid(String task) {
-        if (task.equals("ItemBuyer")) {
-            return (needsBuyableItems() || !orderedItems.isEmpty()) && !needGold;
-        } else if (task.equals("BonesCollector")) {
-            return defaultValidCheck(task) && needGold;
-        } else if (task.equals("Init")) {
-            return !init;
+        switch (task) {
+            case "ItemBuyer":
+                return (needsBuyableItems() || !orderedItems.isEmpty()) && !needGold;
+            case "BonesCollector":
+                return defaultValidCheck(task) && needGold;
+            case "Init":
+                return !init;
+            default:
+                return defaultValidCheck(task);
         }
-        return defaultValidCheck(task);
     }
 
     private static boolean defaultValidCheck(String task) {
@@ -139,12 +148,12 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         return 1;
     }
 
-    public static void addNeededItem(String itemName, int amount, String task) {
+    public static void addItemToBuy(String itemName, int amount, String task) {
         Logger.log("Adding needed item: " + itemName + " ("+amount+").");
-        if (neededItems.containsKey(itemName)) {
-            neededItems.put(itemName, neededItems.get(itemName) + amount);
+        if (itemsToBuy.containsKey(itemName)) {
+            itemsToBuy.put(itemName, itemsToBuy.get(itemName) + amount);
         } else {
-            neededItems.put(itemName, amount);
+            itemsToBuy.put(itemName, amount);
         }
         if (taskRequiredItems.containsKey(task)) {
             taskRequiredItems.get(task).add(itemName);
@@ -154,20 +163,11 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         }
     }
 
-    public static boolean addOrderedItem(String itemName) {
-        int amount = neededItems.get(itemName);
+    public static void addOrderedItem(String itemName) {
+        int amount = itemsToBuy.get(itemName);
         Logger.log("Adding ordered item: " + itemName + " ("+amount+").");
-        if (!neededItems.containsKey(itemName)) {
-            return false;
-        } else {
-            neededItems.remove(itemName);
-        }
+        itemsToBuy.remove(itemName);
         orderedItems.put(itemName, amount);
-        return true;
-    }
-
-    public static boolean isNeededItem(String itemName) {
-        return neededItems.containsKey(itemName);
     }
 
     public static boolean isOrderedItem(String itemName) {
@@ -176,7 +176,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static void removeOrderedItem(String itemName) {
         orderedItems.remove(itemName);
-        removeTaskRequiredItems(itemName);
+        removeTaskRequiredItems(itemName);  // assuming here that tasks don't overlap in what items they need
     }
 
     private static void removeTaskRequiredItems(String itemName) {
@@ -185,8 +185,18 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         }
     }
 
+    public static void addItemToGather(String itemName, String task) {
+        itemsToGather.add(itemName);
+        if (taskRequiredItems.containsKey(task)) {
+            taskRequiredItems.get(task).add(itemName);
+        } else {
+            taskRequiredItems.put(task, new ArrayList<>());
+            taskRequiredItems.get(task).add(itemName);
+        }
+    }
+
     public static Iterator<Map.Entry<String, Integer>> neededItems() {
-        return neededItems.entrySet().iterator();
+        return itemsToBuy.entrySet().iterator();
     }
 
     public static boolean areOrderedItems() {
@@ -195,7 +205,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     private static boolean needsBuyableItems() {
         List<String> items = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : neededItems.entrySet()) {
+        for (Map.Entry<String, Integer> entry : itemsToBuy.entrySet()) {
             if (!gatherableItems.contains(entry.getKey())) {
                 items.add(entry.getKey());
             }
@@ -224,11 +234,8 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     }
 
     public static boolean isLevelUpVisible() {
-        return Widgets.get(233, 1) != null && Widgets.get(233, 1).isVisible();
-    }
-
-    public static int getGoldAmount() {
-        return gold;
+        WidgetChild w = Widgets.get(233, 1);
+        return w != null && w.isVisible();
     }
 
     public static void setGoldAmount(int gold) {
@@ -251,9 +258,9 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static List<String> getFishableNeededItems() {
         List<String> fishableNeededItems = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : neededItems.entrySet()) {
-            if (fishableItems.contains(entry.getKey())) {
-                fishableNeededItems.add(entry.getKey());
+        for (String item : itemsToGather) {
+            if (fishableItems.contains(item)) {
+                fishableNeededItems.add(item);
             }
         }
         return fishableNeededItems;
@@ -261,9 +268,9 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
 
     public static List<String> getCuttableNeededItems() {
         List<String> cuttableNeededItems = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : neededItems.entrySet()) {
-            if (cuttableItems.contains(entry.getKey())) {
-                cuttableNeededItems.add(entry.getKey());
+        for (String item : itemsToGather) {
+            if (cuttableItems.contains(item)) {
+                cuttableNeededItems.add(item);
             }
         }
         return cuttableNeededItems;

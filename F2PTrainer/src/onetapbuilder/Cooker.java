@@ -30,11 +30,14 @@ public class Cooker extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Cooker") && hasCookableItems();
+        return OneTapBuilder.valid("Cooker");
     }
 
     @Override
     public int execute() {
+        if (!hasCookableItems()) {
+            OneTapBuilder.addItemToGather(fishNames.get(0), "Cooker");
+        }
         if (!initialized) {
             findBestFish();
             initialized = true;
@@ -68,7 +71,7 @@ public class Cooker extends TaskNode {
                     // if we don't have anything in our inventory, quit because we have no fish
                     if (Inventory.isEmpty()) {
                         Logger.log("Nothing to cook!");
-                        OneTapBuilder.addNeededItem(fishNames.get(0), 100, "Cooker");
+                        OneTapBuilder.addItemToBuy(fishNames.get(0), 100, "Cooker");
                     } else if (inventoryHasRawFood()) {
                         // need this to know that we've reset our inventory fully
                         setupInventory = true;
@@ -106,6 +109,16 @@ public class Cooker extends TaskNode {
                                         findBestFish();
                                         setupInventory = false;
                                     }
+                                }
+                            } else {
+                                if (Sleep.sleepUntil(() -> {
+                                    WidgetChild cookWidget = Widgets.get(229, 3);
+                                    return cookWidget != null && cookWidget.isVisible();
+                                }, 5000)) {
+                                    // "You haven't got anything to cook." Widget
+                                    Logger.log("Cooking finished.");
+                                    findBestFish();
+                                    setupInventory = false;
                                 }
                             }
                         } else {
@@ -145,12 +158,17 @@ public class Cooker extends TaskNode {
         fishNames.add("Raw anchovies");
     }
 
+    // run script when we have items to cook--block if we have not initialized "fishNames" yet.
     private boolean hasCookableItems() {
-        for (String fish : fishNames) {
-            if (Bank.contains(fish) || Inventory.contains(fish)) {
-                return true;
+        if (!fishNames.isEmpty()) {
+            for (String fish : fishNames) {
+                if (Bank.contains(fish) || Inventory.contains(fish)) {
+                    return true;
+                }
             }
+            return false;
+        } else {
+            return true;
         }
-        return false;
     }
 }

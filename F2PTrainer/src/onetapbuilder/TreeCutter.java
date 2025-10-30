@@ -14,7 +14,6 @@ import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -132,7 +131,7 @@ public class TreeCutter extends TaskNode {
                     Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
                 } else {
                     Logger.log("Need axe " + axe_name + ". Adding to needed items.");
-                    OneTapBuilder.addNeededItem(axe_name, 1, "TreeCutter");
+                    OneTapBuilder.addItemToBuy(axe_name, 1, "TreeCutter");
                 }
             }
             Sleep.sleepUntil(() -> Inventory.contains(axe_name), 5000);

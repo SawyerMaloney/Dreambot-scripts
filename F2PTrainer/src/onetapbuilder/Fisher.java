@@ -56,7 +56,7 @@ public class Fisher extends TaskNode {
             }
         }
 
-        return 500 + Calculations.random(100, 300);
+        return 1000 + Calculations.random(100, 300);
     }
 
     private void fish() {
@@ -82,7 +82,7 @@ public class Fisher extends TaskNode {
             initialize();
         }
         if (!Inventory.contains(rod_name) || (feathers && !Inventory.contains("Feather"))) {
-            Logger.log("Missing rod, feathers, or axe and tinderbox.");
+            Logger.log("Missing rod or feathers.");
             return retrieveItems();
         }
         else if (!Inventory.isFull()) {
@@ -102,7 +102,7 @@ public class Fisher extends TaskNode {
             fishing = false;
             return bankFish();
         }
-        return 500 + Calculations.random(100, 500);
+        return 1000 + Calculations.random(100, 500);
     }
 
     private int bankFish() {

@@ -137,7 +137,6 @@ public class ItemBuyer extends TaskNode {
 
 
     public static void onInventoryItemAdded(Item item) {
-        Logger.log("item added to inventory: " + item.getName());
         if (state == State.WAIT_FOR_ORDERS) {
             if (OneTapBuilder.isOrderedItem(item.getName())) {
                 Logger.log("Item " + item.getName() + " removed from ordered items.");
@@ -148,7 +147,6 @@ public class ItemBuyer extends TaskNode {
 
 
     public static void onInventoryItemChanged(Item incoming, Item existing) {
-        Logger.log("Item being changed in inventory: " + existing.getName());
         if (state == State.WAIT_FOR_ORDERS) {
             if (OneTapBuilder.isOrderedItem(existing.getName())) {
                 Logger.log("Item " + existing.getName() + " removed from ordered items.");
