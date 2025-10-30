@@ -30,7 +30,7 @@ public class Cooker extends TaskNode {
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Cooker");
+        return OneTapBuilder.valid("Cooker") && hasCookableItems();
     }
 
     @Override
@@ -143,5 +143,14 @@ public class Cooker extends TaskNode {
         }
         fishNames.add("Raw shrimps");
         fishNames.add("Raw anchovies");
+    }
+
+    private boolean hasCookableItems() {
+        for (String fish : fishNames) {
+            if (Bank.contains(fish) || Inventory.contains(fish)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

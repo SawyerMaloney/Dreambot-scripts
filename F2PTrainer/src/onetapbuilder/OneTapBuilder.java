@@ -46,8 +46,9 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     public static boolean init;
     private final long task_length = 60_000;
     private final Timer timer = new Timer(task_length);
-    private static final List<String> gatherableItems = Arrays.asList("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon", "Logs", "Oak logs", "Yew logs");
+    private static final List<String> gatherableItems = Arrays.asList("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon", "Logs", "Oak logs", "Yew logs", "Maple logs", "Willow logs");
     private static final List<String> fishableItems = Arrays.asList("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon");
+    private static final List<String> cuttableItems = Arrays.asList("Logs", "Oak logs", "Yew logs", "Willow Logs", "Maple logs");
 
     @Override
     public void onStart() {
@@ -55,8 +56,8 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         setInventoryLimits();
         addInventory();
         setFailLimit(3);
-        addNeededItem("Raw shrimps", 100, "Blah Blah");
-        addNodes(new Init(), new ItemBuyer(), new Fisher());
+        addNeededItem("Raw shrimps", 30, "Blah Blah");
+        addNodes(new Init(), new ItemBuyer(), new Cooker(), new Fisher());
     }
 
     private void addInventory() {
@@ -256,5 +257,15 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
             }
         }
         return fishableNeededItems;
+    }
+
+    public static List<String> getCuttableNeededItems() {
+        List<String> cuttableNeededItems = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : neededItems.entrySet()) {
+            if (cuttableItems.contains(entry.getKey())) {
+                cuttableNeededItems.add(entry.getKey());
+            }
+        }
+        return cuttableNeededItems;
     }
 }

@@ -19,10 +19,7 @@ import org.dreambot.api.wrappers.interactive.Player;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.wrappers.widgets.WidgetChild;
 
-import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Firemaker extends TaskNode {
     private enum State {
@@ -39,11 +36,11 @@ public class Firemaker extends TaskNode {
     private GameObject fire;
 
     private final List<String> logNames = Arrays.asList("Yew logs", "Maple logs", "Willow logs", "Oak logs", "Logs");
-
+    private final List<String> burnableLogs = new ArrayList<>();
 
     @Override
     public boolean accept() {
-        return OneTapBuilder.valid("Firemaker");
+        return OneTapBuilder.valid("Firemaker") && hasBurnableItems();
     }
 
     @Override
@@ -242,18 +239,33 @@ public class Firemaker extends TaskNode {
 
     private void setLogName() {
         int firemakingSkill = Skills.getRealLevel(Skill.FIREMAKING);
+        burnableLogs.clear();
+        burnableLogs.add("Logs");
 
         logName = "Logs";
         if (firemakingSkill >= 60) {
             logName = "Yew logs";
+            burnableLogs.add("Yew logs");
         } else if (firemakingSkill >= 45) {
             logName = "Maple logs";
+            burnableLogs.add("Maple logs");
         } else if (firemakingSkill >= 30) {
             logName = "Willow logs";
+            burnableLogs.add("Willow logs");
         } else if (firemakingSkill >= 15) {
             logName = "Oak logs";
+            burnableLogs.add("Oak logs");
         }
 
         Logger.log("Current firemaking skill: " + firemakingSkill + ". Burning: " + logName + ".");
+    }
+
+    private boolean hasBurnableItems() {
+        for (String log : burnableLogs) {
+            if (Bank.contains(log) || Inventory.contains(log)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
