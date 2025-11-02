@@ -54,7 +54,7 @@ public class WoodCutter extends AbstractScript {
 
     private final Tile ge_tile = new Tile(3162, 3488);
 
-    private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Black axe", "Adamant axe", "Mithril axe", "Rune axe"));
+    private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Black axe", "Mithril axe", "Adamant axe", "Rune axe"));
     private int axe_index = 0;
 
     private Tile destination;
