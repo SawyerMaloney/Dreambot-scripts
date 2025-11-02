@@ -54,7 +54,7 @@ public class WoodCutter extends AbstractScript {
 
     private final Tile ge_tile = new Tile(3162, 3488);
 
-    private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Adamant axe", "Mithril axe", "Rune axe"));
+    private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Black axe", "Adamant axe", "Mithril axe", "Rune axe"));
     private int axe_index = 0;
 
     private Tile destination;
@@ -241,9 +241,10 @@ public class WoodCutter extends AbstractScript {
 
     private int walk_to_bank() {
         if (Bank.open()) {
-            Sleep.sleepUntil(() -> Bank.depositAllExcept(axe_name), 3000);
+            updateAxe();
             updateAxeIndex();
-            Sleep.sleepUntil(() -> Inventory.isEmpty(), 1000);
+            Sleep.sleepUntil(() -> Bank.depositAllExcept(axe_name), 3000);
+            Sleep.sleepUntil(Inventory::isEmpty, 1000);
             if (!Inventory.contains(axe_name)) {
                 if (Bank.contains(axe_name)) {
                     Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
@@ -257,36 +258,40 @@ public class WoodCutter extends AbstractScript {
                 Logger.log("WALKING_TO_TREE");
                 state = State.WALKING_TO_TREE;
             } else {
-                Logger.log("Failed to withdraw axe" + axe_name + ".");
+                Logger.log("Failed to withdraw axe " + axe_name + ".");
             }
         }
         return 500;
     }
 
     private void updateAxeIndex() {
-        if (!Inventory.contains(axe_name)) {
-            while (axe_index > 0 && !Bank.contains(axe_name)) {
-                axe_index -= 1;
-                axe_name =  axeNames.get(axe_index);
-            }
+        while (!Inventory.contains(axe_name) && !Bank.contains(axe_name)) {
+            axe_index--;
+            axe_name = axeNames.get(axe_index);
         }
     }
 
-    private void updateTreeAndAxe() {
+    private void updateAxe() {
         int skill = Skills.getRealLevel(Skill.WOODCUTTING);
 
         // set axe
         if (skill >= 41) {
-            axe_index = 3;
+            axe_index = 4;
         } else if (skill >= 31) {
-            axe_index = 2;
+            axe_index = 3;
         } else if (skill >= 21) {
-            axe_index = 1;
+            axe_index = 2;
         } else if (skill >= 11) {
+            axe_index = 1;
+        } else {
             axe_index = 0;
         }
 
         axe_name = axeNames.get(axe_index);
+    }
+
+    private void updateTree() {
+        int skill = Skills.getRealLevel(Skill.WOODCUTTING);
 
         // see if user has set tree
         if (yew || oak || tree) {
@@ -312,6 +317,10 @@ public class WoodCutter extends AbstractScript {
                 destination = returnTreeSpot(treeSpots);
             }
         }
-        Logger.log("Current axe name: " + axe_name + ". Current tree name: " + tree_name);
+    }
+
+    private void updateTreeAndAxe() {
+        updateTree();
+        updateAxe();
     }
 }
