@@ -19,7 +19,7 @@ import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.items.Item;
 
 @ScriptManifest(name = "[One Tap] F2P Runecrafting Dreambot Script", description = "Simple F2P Runecrafting Script.", author = "sawyerm",
-        version = 1.0, category = Category.MISC)
+        version = 1.0, category = Category.MISC, image = "8Zl24YQ")
 
 
 public class RunecrafterAbstractScript extends AbstractScript {
