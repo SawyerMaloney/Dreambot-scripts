@@ -84,6 +84,9 @@ public class WoodCutter extends AbstractScript {
                 case "yew":
                     yew = true;
                     break;
+                case "usege":
+                    useGE = true;
+                    break;
                 default:
                     Logger.log("Unknown parameter: " + param);
                     break;
