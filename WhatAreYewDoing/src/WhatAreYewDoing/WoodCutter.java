@@ -6,6 +6,7 @@ import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.grandexchange.GrandExchange;
+import org.dreambot.api.methods.grandexchange.LivePrices;
 import org.dreambot.api.methods.interactive.GameObjects;
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.map.Tile;
@@ -18,19 +19,17 @@ import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
-import org.dreambot.api.wrappers.interactive.Player;
+import org.dreambot.api.wrappers.items.Item;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @ScriptManifest(name = "[One Tap] F2P Woodcutting", description = "[One Tap] F2P woodcutter that goes to the right logs and uses the best axe.", author = "sawyerm",
         version = 1.0, category = Category.WOODCUTTING, image = "8Zl24YQ")
 
 public class WoodCutter extends AbstractScript {
-    private enum State {WALKING_TO_BANK, WALKING_TO_TREE, CHOP, BUY_AXE}
-    private State state = State.WALKING_TO_BANK;
+    public enum State {WALKING_TO_BANK, WALKING_TO_TREE, CHOP, BUY_AXE, COMBAT}
+    private static State state = State.WALKING_TO_BANK;
+    private static State previousState = State.WALKING_TO_BANK;
     private boolean initialized = false;
     private boolean tree = false;
     private boolean oak = false;
@@ -52,7 +51,7 @@ public class WoodCutter extends AbstractScript {
             new Tile(3209, 3503)
     ));
 
-    private final Tile ge_tile = new Tile(3162, 3488);
+    private final Tile ge_tile = new Tile(3164, 3487);
 
     private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Black axe", "Mithril axe", "Adamant axe", "Rune axe"));
     private int axe_index = 0;
@@ -67,6 +66,8 @@ public class WoodCutter extends AbstractScript {
     private long startTime;
     private int inventories = 0;
     private int startExp;
+
+    private WoodCombat woodCombat = new WoodCombat();
 
     @Override
     public void onStart(String... params) {
@@ -105,6 +106,7 @@ public class WoodCutter extends AbstractScript {
         tree = gui.getTree();
         oak = gui.getOak();
         yew = gui.getYew();
+        useGE = gui.getUseGE();
 
         startTime = System.currentTimeMillis();
         webhook = new DiscordWebhook(webhook_url);
@@ -122,9 +124,9 @@ public class WoodCutter extends AbstractScript {
         Logger.log("Current woodcutting skill: " + Skills.getRealLevel(Skill.WOODCUTTING));
         updateTreeAndAxe();
         if (Inventory.contains(axe_name)) {
-            state = State.WALKING_TO_TREE;
+            updateState(State.WALKING_TO_TREE);
         }
-        Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ", state: " + state + ".");
+        Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ", state: " + state + ", useGE: " + useGE + ".");
         return 1;
     }
 
@@ -144,18 +146,6 @@ public class WoodCutter extends AbstractScript {
         return treeList.get(index);
     }
 
-    private int findNextBestAxe() {
-        for (int i = 0; i <= axe_index; i++) {
-            if (Bank.contains(axeNames.get(i))) {
-                Bank.withdraw(axeNames.get(i));
-                return 0;
-            }
-        }
-
-        Logger.log("Failed to find any suitable axe!");
-        return -1;
-    }
-
     @Override
     public int onLoop() {
         if (!initialized) {
@@ -163,6 +153,7 @@ public class WoodCutter extends AbstractScript {
                 initialized = true;
             }
         } else {
+            checkInCombat();
             switch (state) {
                 case WALKING_TO_BANK:
                     return walk_to_bank();
@@ -175,29 +166,57 @@ public class WoodCutter extends AbstractScript {
 
                 case BUY_AXE:
                     return buy_axe();
+
+                case COMBAT:
+                    woodCombat.onLoop();
             }
         }
         return 500;
     }
 
+    private void checkInCombat() {
+        if (Players.getLocal().isInCombat() && state != State.COMBAT) {
+            updateState(State.COMBAT);
+        }
+    }
+
     private int buy_axe() {
-        if (ge_tile.distance() < 1) {
+        if (Bank.isOpen()) {
+            Bank.close();
+        }
+        if (ge_tile.distance() > 1) {
             if (Walking.shouldWalk()) {
+                Logger.log("Walking towards GE.");
                 Walking.walk(ge_tile);
             }
         } else {
-            int open_slot = GrandExchange.getFirstOpenSlot();
-            if (open_slot == -1) {
-                Logger.log("no GE slots open.");
-                return -1;
-            } else {
-                GrandExchange.addBuyItem(axe_name);
-                Sleep.sleepUntil(() -> GrandExchange.isReadyToCollect(open_slot), 30000);
-                if (GrandExchange.isReadyToCollect()) {
-                    GrandExchange.collect();
-                    state = State.WALKING_TO_BANK;
+            Item invCoins = Inventory.get("Coins");
+            Item bankCoins = Bank.get("Coins");
+            if (invCoins != null && bankCoins != null) {
+                if (LivePrices.getHigh(axe_name) > invCoins.getAmount() + bankCoins.getAmount()) {
+                    Logger.log("Not enough coins to buy axe.");
+                    useGE = false;
+                    updateState(getPreviousState());
                 } else {
-                    GrandExchange.cancelOffer(open_slot);
+                    Logger.log("Enough coins to buy axe.");
+                }
+            }
+            Logger.log("Going to open GE.");
+            if (GrandExchange.open()) {
+                int open_slot = GrandExchange.getFirstOpenSlot();
+                if (open_slot == -1) {
+                    Logger.log("no GE slots open.");
+                    return -1;
+                } else {
+                    Logger.log("Open slot. Adding buy item.");
+                    GrandExchange.buyItem(axe_name, 1, LivePrices.get(axe_name));
+                    Sleep.sleepUntil(() -> GrandExchange.isReadyToCollect(open_slot), 30000);
+                    if (GrandExchange.isReadyToCollect()) {
+                        GrandExchange.collect();
+                        updateState(State.WALKING_TO_BANK);
+                    } else {
+                        GrandExchange.cancelOffer(open_slot);
+                    }
                 }
             }
         }
@@ -218,8 +237,7 @@ public class WoodCutter extends AbstractScript {
                 if (inventories % 10 == 0) {
                     webhook.sendMessage("A user completed " + inventories + " inventories.");
                 }
-                Logger.log("WALKING_TO_BANK");
-                state = State.WALKING_TO_BANK;
+                updateState(State.WALKING_TO_BANK);
             }
         } else {
             Logger.log("No tree nearby.");
@@ -233,8 +251,7 @@ public class WoodCutter extends AbstractScript {
                     Walking.walk(destination);
                 }
             } else {
-                Logger.log("CHOP");
-                state = State.CHOP;
+                updateState(State.CHOP);
             }
         return 500;
     }
@@ -249,14 +266,13 @@ public class WoodCutter extends AbstractScript {
                 if (Bank.contains(axe_name)) {
                     Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
                 } else if (useGE) {
-                    state = State.BUY_AXE;
+                    updateState(State.BUY_AXE);
                     return 500;
                 }
             }
             Sleep.sleepUntil(() -> Inventory.contains(axe_name), 5000);
             if (Inventory.contains(axe_name)) {
-                Logger.log("WALKING_TO_TREE");
-                state = State.WALKING_TO_TREE;
+                updateState(State.WALKING_TO_TREE);
             } else {
                 Logger.log("Failed to withdraw axe " + axe_name + ".");
             }
@@ -265,7 +281,7 @@ public class WoodCutter extends AbstractScript {
     }
 
     private void updateAxeIndex() {
-        while (!Inventory.contains(axe_name) && !Bank.contains(axe_name)) {
+        while (!Inventory.contains(axe_name) && !Bank.contains(axe_name) && !useGE) {
             axe_index--;
             axe_name = axeNames.get(axe_index);
         }
@@ -322,5 +338,35 @@ public class WoodCutter extends AbstractScript {
     private void updateTreeAndAxe() {
         updateTree();
         updateAxe();
+    }
+
+    public static void updateState(State newState) {
+        previousState = state;
+        state = newState;
+        switch (newState) {
+            case WALKING_TO_BANK:
+                Logger.log("State changed: Walking to bank.");
+                break;
+            case WALKING_TO_TREE:
+                Logger.log("State changed: Walking to tree.");
+                break;
+            case CHOP:
+                Logger.log("State changed: Chop.");
+                break;
+            case BUY_AXE:
+                Logger.log("State changed: Buying axe.");
+                break;
+            case COMBAT:
+                Logger.log("State changed: Combat.");
+                break;
+        }
+    }
+
+    public static State getState() {
+        return state;
+    }
+
+    public static State getPreviousState() {
+        return previousState;
     }
 }

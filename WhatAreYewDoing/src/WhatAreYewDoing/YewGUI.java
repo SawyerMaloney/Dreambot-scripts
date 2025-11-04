@@ -11,6 +11,7 @@ public class YewGUI {
     private volatile boolean tree;
     private volatile boolean oak;
     private volatile boolean yew;
+    private volatile boolean useGE;
 
     private volatile boolean confirmed = false;
 
@@ -81,6 +82,18 @@ public class YewGUI {
             panel.add(box);
             panel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
+        JLabel useGELabel = new JLabel("Buy new axes automatically from GE:");
+        useGELabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        useGELabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(useGELabel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JCheckBox geBox = new JCheckBox("Buy better axes from the GE:", useGE);
+        geBox.setAlignmentX(Component.CENTER_ALIGNMENT);
+        geBox.setForeground(Color.WHITE);
+        geBox.setBackground(Color.BLACK);
+        panel.add(geBox);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
 
         // ---------- Start button ----------
         JButton startButton = new JButton("Start Script");
@@ -94,6 +107,7 @@ public class YewGUI {
             tree = treeBox.isSelected();
             oak = oakBox.isSelected();
             yew = yewBox.isSelected();
+            useGE = geBox.isSelected();
             confirmed = true;
             frame.dispose();
         });
@@ -135,4 +149,6 @@ public class YewGUI {
     public boolean getYew() {
         return yew;
     }
+
+    public boolean getUseGE() { return useGE; }
 }
