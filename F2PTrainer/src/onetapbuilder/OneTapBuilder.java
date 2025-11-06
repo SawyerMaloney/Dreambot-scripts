@@ -24,28 +24,20 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     @Override
     public void onStart() {
         Logger.log("Scheduler starting.");
-        InventoryManager.init();
         setFailLimit(3);
-        ItemTracker.addItemToGather("Raw shrimps", "Cooker");
-        addNodes(new Init(), new ItemBuyer(), new Fisher());
+        addNodes(new Init(), new ItemBuyer(), new Cooker(), new Fisher());
     }
 
 
     @Override
     public void onExit() {
         Logger.log("Script ended");
-
-        // if the script reached its endpoint (not stopped by the user)
-        if (InventoryManager.atInventoryLimit()) {
-            Client.logout();
-        }
     }
 
     public static void setGoldAmount(int gold) {
         OneTapBuilder.gold = gold;
     }
 
-    // TODO these should point at ItemTracker or InventoryManager
     @Override
     public void onInventoryItemAdded(Item item) {
         InventoryManager.onInventoryItemAdded(item);

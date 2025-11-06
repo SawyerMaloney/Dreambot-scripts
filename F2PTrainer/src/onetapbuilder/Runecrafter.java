@@ -93,7 +93,6 @@ public class Runecrafter extends TaskNode {
         if ((portal != null && portal.exists() && portal.interact()) || altar_tile.distance() < 10) {
             Sleep.sleepUntil(() -> altar_tile.distance() < 10, 5000);
             if (altar_tile.distance() < 10) {
-                InventoryManager.updateInventories("Runecrafter");
                 Logger.log("WALK_TO_BANK");
                 state = State.WALK_TO_BANK;
             } else {

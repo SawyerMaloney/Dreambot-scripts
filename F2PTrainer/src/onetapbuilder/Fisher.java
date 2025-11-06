@@ -38,6 +38,7 @@ public class Fisher extends TaskNode {
         setFishMaps();
         setNames();
         Logger.log("Starting script with rod " + rod_name + " and feathers " + feathers + ".");
+        TaskScheduler.init("Fisher");
         initialized = true;
     }
     @Override

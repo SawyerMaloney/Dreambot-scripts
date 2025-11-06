@@ -41,7 +41,8 @@ public class Cooker extends TaskNode {
             ItemTracker.addItemToGather(fishNames.get(0), "Cooker");
         }
         if (!setupTimer) {
-            TaskScheduler.timer();
+            TaskScheduler.init("Cooker");
+            setupTimer = true;
         }
         if (!initialized) {
             findBestFish();

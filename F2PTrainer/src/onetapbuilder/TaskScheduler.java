@@ -2,10 +2,16 @@ package onetapbuilder;
 
 import org.dreambot.api.utilities.Timer;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class TaskScheduler {
     public static boolean init;
     private static final long task_length = 300_000; // 5 minutes
     private static final Timer timer = new Timer(task_length);
+    private static final Set<String> finishedTasks = new HashSet<>();
+    private static String currentTask = "";
+
 
     public static boolean valid(String task) {
         switch (task) {
@@ -21,28 +27,21 @@ public class TaskScheduler {
     }
 
     private static boolean defaultValidCheck(String task) {
-        return !ItemTracker.taskRequiresItems(task) && InventoryManager.checkTasksInventory(task) && !timer.finished();
+        return !ItemTracker.taskRequiresItems(task) && !timer.finished() && !finishedTask(task);
     }
 
-    public static void startTimer() {
+    private static boolean finishedTask(String task) {
+        return finishedTasks.contains(task) && !currentTask.equals(task);
+    }
+
+    public static void clearFinishedTasks() {
+        finishedTasks.clear();
+    }
+
+    public static void init(String task) {
+        currentTask = task;
+        finishedTasks.add(task);
+        timer.reset();
         timer.start();
     }
-
-    public static boolean timerFinished() {
-        return timer.finished();
-    }
-
-    public static void resetTimer() {
-        timer.reset();
-    }
-
-    public static void pauseTimer() {
-        timer.pause();
-    }
-
-    public static void timer() {
-        resetTimer();
-        startTimer();
-    }
-
 }
