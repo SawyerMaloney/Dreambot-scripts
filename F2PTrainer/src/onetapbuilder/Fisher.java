@@ -67,7 +67,7 @@ public class Fisher extends TaskNode {
     }
 
     private void fish() {
-        Logger.log("At spot. Looking for fishing spot.");
+        Logger.log("At spot. Looking for fishing spot: " + fishing_spot_name + ".");
         fishing = true;
         NPC fishing_spot = NPCs.closest(fishing_spot_name);
         Sleep.sleep(Calculations.random(100, 500));
@@ -150,7 +150,7 @@ public class Fisher extends TaskNode {
                         rod_name = "Fly fishing rod";
                         feathers = true;
                         interact = "Lure";
-                        fishing_spot_name = "Fly fishing spot";
+                        fishing_spot_name = "Rod Fishing spot";
                     } else {
                         rod_name = "Small fishing net";
                         feathers = false;
@@ -165,7 +165,7 @@ public class Fisher extends TaskNode {
                 rod_name = "Fly fishing rod";
                 destination = fly_fishing_tile;
                 feathers = true;
-                fishing_spot_name = "Rod fishing spot";
+                fishing_spot_name = "Rod Fishing spot";
                 interact = "Lure";
             } else {
                 rod_name = "Small fishing net";
@@ -175,6 +175,8 @@ public class Fisher extends TaskNode {
                 interact = "Net";
             }
         }
+
+        Logger.log("Fishing spot: " + fishing_spot_name + ". Rod: " + rod_name);
     }
 
     private void setFishMaps() {
