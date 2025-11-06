@@ -1,6 +1,7 @@
 package onetapbuilder;
 
 import org.dreambot.api.utilities.Logger;
+import org.dreambot.api.wrappers.items.Item;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,6 +58,19 @@ public class InventoryManager {
 
     public static boolean checkTasksInventory(String task) {
         return !atInventoryLimit() && inventories.get(task) < inventory_limits.get(task);
+    }
+
+    public static void onInventoryItemAdded(Item item) {
+        ItemBuyer.onInventoryItemAdded(item);
+
+        if (NeededItemTracker.isItemToGather(item.getName())) {
+            Logger.log("Item " + item.getName() + " removed from items to gather.");
+            NeededItemTracker.removeGatherItem(item.getName());
+        }
+    }
+
+    public static void onInventoryItemChanged(Item incoming, Item existing) {
+        ItemBuyer.onInventoryItemChanged(incoming, existing);
     }
 
 }

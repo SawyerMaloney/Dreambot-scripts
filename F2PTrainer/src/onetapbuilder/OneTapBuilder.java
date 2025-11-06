@@ -1,6 +1,7 @@
 package onetapbuilder;
 
 import org.dreambot.api.Client;
+import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
@@ -15,10 +16,7 @@ import org.dreambot.api.utilities.Timer;
 
 
 public class OneTapBuilder extends TaskScript implements ItemContainerListener {
-
-
     public static boolean canCast = true;
-
 
     public static final Tile geTile = new Tile(3162, 3487);
     private static int gold = 0;
@@ -53,11 +51,11 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     // TODO these should point at ItemTracker or InventoryManager
     @Override
     public void onInventoryItemAdded(Item item) {
-        ItemBuyer.onInventoryItemAdded(item);
+        InventoryManager.onInventoryItemAdded(item);
     }
 
     @Override
     public void onInventoryItemChanged(Item incoming, Item existing) {
-        ItemBuyer.onInventoryItemChanged(incoming, existing);
+        InventoryManager.onInventoryItemChanged(incoming, existing);
     }
 }

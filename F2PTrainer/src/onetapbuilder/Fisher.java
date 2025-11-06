@@ -30,8 +30,8 @@ public class Fisher extends TaskNode {
     private String interact = "";
     private String fishing_spot_name = "";
 
-    private static Map<String, Integer> fishLevelRequirements = new HashMap<>();
-    private static Map<String, Tile> fishSpotMap = new HashMap<>();
+    private static final Map<String, Integer> fishLevelRequirements = new HashMap<>();
+    private static final Map<String, Tile> fishSpotMap = new HashMap<>();
 
     private void initialize() {
         Logger.log("Starting fishing bot...");
@@ -136,7 +136,7 @@ public class Fisher extends TaskNode {
         int fishingSkill = Skills.getRealLevel(Skill.FISHING);
         int currentReqSkill = 0;
 
-        // check if we need to gather a particular fish, and if we have the skill to do so
+        // check if we need to gather a particular fish, and if we have the skill to do so,
         // try to get the highest skill level fish we can, for max XP
         List<String> neededItems = NeededItemTracker.getFishableNeededItems();
         if (!neededItems.isEmpty()) {
@@ -149,10 +149,12 @@ public class Fisher extends TaskNode {
                         rod_name = "Fly fishing rod";
                         feathers = true;
                         interact = "Lure";
+                        fishing_spot_name = "Fly fishing spot";
                     } else {
                         rod_name = "Small fishing net";
                         feathers = false;
                         interact = "Net";
+                        fishing_spot_name = "Fishing spot";
                     }
                 }
             }
@@ -164,6 +166,12 @@ public class Fisher extends TaskNode {
                 feathers = true;
                 fishing_spot_name = "Rod fishing spot";
                 interact = "Lure";
+            } else {
+                rod_name = "Small fishing net";
+                destination = small_net_tile;
+                feathers = false;
+                fishing_spot_name = "Fishing spot";
+                interact = "Net";
             }
         }
     }

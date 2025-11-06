@@ -113,4 +113,12 @@ public class NeededItemTracker {
     public static boolean hasOrderedItems() {
         return !orderedItems.isEmpty();
     }
+
+    public static boolean isItemToGather (String itemName) {
+        return itemsToGather.contains(itemName);
+    }
+
+    public static void removeGatherItem(String itemName) {
+        itemsToGather.remove(itemName);
+    }
 }
