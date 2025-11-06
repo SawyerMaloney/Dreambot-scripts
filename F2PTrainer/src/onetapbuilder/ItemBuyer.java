@@ -6,7 +6,6 @@ import org.dreambot.api.methods.grandexchange.GrandExchange;
 import org.dreambot.api.methods.grandexchange.LivePrices;
 import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.script.TaskNode;
-import org.dreambot.api.script.listener.ItemContainerListener;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.utilities.Timer;
@@ -50,7 +49,7 @@ public class ItemBuyer extends TaskNode {
     }
 
     private int waitForOrders() {
-        if (!NeededItemTracker.areOrderedItems()) {
+        if (!ItemTracker.areOrderedItems()) {
             Logger.log("No items to collect left.");
             return 500;
         }
@@ -69,7 +68,7 @@ public class ItemBuyer extends TaskNode {
     }
 
     private int placeOrder() {
-        Iterator<Map.Entry<String, Integer>> iter = NeededItemTracker.neededItems();
+        Iterator<Map.Entry<String, Integer>> iter = ItemTracker.neededItems();
         while (iter.hasNext() && GrandExchange.getFirstOpenSlot() != -1) {
             Map.Entry<String, Integer> item = iter.next();
             String itemName = item.getKey();
@@ -80,7 +79,7 @@ public class ItemBuyer extends TaskNode {
 
             if (Sleep.sleepUntil(() -> GrandExchange.buyItem(itemName, amount, newPrice), 10000)) {
                 Logger.log("Order placed for " + itemName + " (" + amount + ") @ " + newPrice + " gp each.");
-                NeededItemTracker.addOrderedItem(itemName);
+                ItemTracker.addOrderedItem(itemName);
             } else {
                 Logger.log("Failed to put in buy order for " + itemName +".");
             }
@@ -138,9 +137,9 @@ public class ItemBuyer extends TaskNode {
 
     public static void onInventoryItemAdded(Item item) {
         if (state == State.WAIT_FOR_ORDERS) {
-            if (NeededItemTracker.isOrderedItem(item.getName())) {
+            if (ItemTracker.isOrderedItem(item.getName())) {
                 Logger.log("Item " + item.getName() + " removed from ordered items.");
-                NeededItemTracker.removeOrderedItem(item.getName());
+                ItemTracker.removeOrderedItem(item.getName());
             }
         }
     }
@@ -148,9 +147,9 @@ public class ItemBuyer extends TaskNode {
 
     public static void onInventoryItemChanged(Item incoming, Item existing) {
         if (state == State.WAIT_FOR_ORDERS) {
-            if (NeededItemTracker.isOrderedItem(existing.getName())) {
+            if (ItemTracker.isOrderedItem(existing.getName())) {
                 Logger.log("Item " + existing.getName() + " removed from ordered items.");
-                NeededItemTracker.removeOrderedItem(existing.getName());
+                ItemTracker.removeOrderedItem(existing.getName());
             }
         }
     }

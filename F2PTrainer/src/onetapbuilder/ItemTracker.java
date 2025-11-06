@@ -4,7 +4,7 @@ import org.dreambot.api.utilities.Logger;
 
 import java.util.*;
 
-public class NeededItemTracker {
+public class ItemTracker {
     // Maps for ItemBuyer, tracking items we need to place orders for,
     // and items we already have placed orders for.
     private final static Map<String, Integer> itemsToBuy = new HashMap<>();

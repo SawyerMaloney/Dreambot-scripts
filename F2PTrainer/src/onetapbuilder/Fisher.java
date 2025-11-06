@@ -138,7 +138,7 @@ public class Fisher extends TaskNode {
 
         // check if we need to gather a particular fish, and if we have the skill to do so,
         // try to get the highest skill level fish we can, for max XP
-        List<String> neededItems = NeededItemTracker.getFishableNeededItems();
+        List<String> neededItems = ItemTracker.getFishableNeededItems();
         if (!neededItems.isEmpty()) {
             // check if we can fish them
             for (String fish : neededItems) {

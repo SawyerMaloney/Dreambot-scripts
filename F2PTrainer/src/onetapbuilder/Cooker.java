@@ -28,6 +28,8 @@ public class Cooker extends TaskNode {
 
     private boolean setupInventory = false;
 
+    private boolean setupTimer = false;
+
     @Override
     public boolean accept() {
         return TaskScheduler.valid("Cooker");
@@ -36,7 +38,10 @@ public class Cooker extends TaskNode {
     @Override
     public int execute() {
         if (!hasCookableItems()) {
-            NeededItemTracker.addItemToGather(fishNames.get(0), "Cooker");
+            ItemTracker.addItemToGather(fishNames.get(0), "Cooker");
+        }
+        if (!setupTimer) {
+            TaskScheduler.timer();
         }
         if (!initialized) {
             findBestFish();
@@ -71,7 +76,7 @@ public class Cooker extends TaskNode {
                     // if we don't have anything in our inventory, quit because we have no fish
                     if (Inventory.isEmpty()) {
                         Logger.log("Nothing to cook!");
-                        NeededItemTracker.addItemToBuy(fishNames.get(0), 100, "Cooker");
+                        ItemTracker.addItemToBuy(fishNames.get(0), 100, "Cooker");
                     } else if (inventoryHasRawFood()) {
                         // need this to know that we've reset our inventory fully
                         setupInventory = true;

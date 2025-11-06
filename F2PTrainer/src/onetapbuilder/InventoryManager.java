@@ -63,9 +63,9 @@ public class InventoryManager {
     public static void onInventoryItemAdded(Item item) {
         ItemBuyer.onInventoryItemAdded(item);
 
-        if (NeededItemTracker.isItemToGather(item.getName())) {
+        if (ItemTracker.isItemToGather(item.getName())) {
             Logger.log("Item " + item.getName() + " removed from items to gather.");
-            NeededItemTracker.removeGatherItem(item.getName());
+            ItemTracker.removeGatherItem(item.getName());
         }
     }
 

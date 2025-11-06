@@ -131,7 +131,7 @@ public class TreeCutter extends TaskNode {
                     Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
                 } else {
                     Logger.log("Need axe " + axe_name + ". Adding to needed items.");
-                    NeededItemTracker.addItemToBuy(axe_name, 1, "TreeCutter");
+                    ItemTracker.addItemToBuy(axe_name, 1, "TreeCutter");
                 }
             }
             Sleep.sleepUntil(() -> Inventory.contains(axe_name), 5000);
