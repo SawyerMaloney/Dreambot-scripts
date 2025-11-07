@@ -18,7 +18,7 @@ import org.dreambot.api.wrappers.widgets.WidgetChild;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Cooker extends TaskNode {
+public class Cooker extends TaskNode implements Resetable {
 
     private final Tile bank_tile = new Tile(3094, 3489);
     private final Tile stove_tile = new Tile(3078, 3495);
@@ -28,7 +28,15 @@ public class Cooker extends TaskNode {
 
     private boolean setupInventory = false;
 
-    private boolean setupTimer = false;
+    public void reset() {
+        atBank = false;
+        initialized = false;
+    }
+
+    private void init() {
+        TaskScheduler.init("Cooker");
+        findBestFish();
+    }
 
     @Override
     public boolean accept() {
@@ -40,12 +48,8 @@ public class Cooker extends TaskNode {
         if (!hasCookableItems()) {
             ItemTracker.addItemToGather(fishNames.get(0), "Cooker");
         }
-        if (!setupTimer) {
-            TaskScheduler.init("Cooker");
-            setupTimer = true;
-        }
         if (!initialized) {
-            findBestFish();
+            init();
             initialized = true;
         } else if (!atBank) {
             if (bank_tile.distance() > 1) {

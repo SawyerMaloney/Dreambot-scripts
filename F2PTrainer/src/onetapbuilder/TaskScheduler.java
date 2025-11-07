@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class TaskScheduler {
     public static boolean init;
-    private static final long task_length = 60_000; // 5 minutes
+    private static final long task_length = 600_000; // 5 minutes
     private static final Timer timer = new Timer(task_length);
     private static final Set<String> finishedTasks = new HashSet<>();
     private static String currentTask = "";
@@ -22,6 +22,8 @@ public class TaskScheduler {
                 return defaultValidCheck(task) && OneTapBuilder.needGold;
             case "Init":
                 return !init;
+            case "TaskClearer":
+                return finishedAllTasks();
             default:
                 return defaultValidCheck(task);
         }
@@ -50,5 +52,10 @@ public class TaskScheduler {
 
     public static void resetTimer() {
         timer.reset();
+    }
+
+    // TODO this needs to be updated in case the last one quits w/o reaching timer
+    public static boolean finishedAllTasks() {
+        return finishedTasks.size() == OneTapBuilder.nodes.size() - 3 && timer.finished();
     }
 }

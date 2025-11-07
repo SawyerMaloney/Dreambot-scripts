@@ -12,13 +12,12 @@ import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.wrappers.interactive.NPC;
-import org.dreambot.api.methods.interactive.Players;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Fisher extends TaskNode {
+public class Fisher extends TaskNode implements Resetable {
     private enum State {
         RETRIEVE_ITEMS,
         WALK_TO_FISHING_SPOT,
@@ -48,6 +47,11 @@ public class Fisher extends TaskNode {
         TaskScheduler.init("Fisher");
         initialized = true;
     }
+
+    public void reset() {
+        initialized = false;
+    }
+
     @Override
     public boolean accept() {
         return TaskScheduler.valid("Fisher");
@@ -99,6 +103,7 @@ public class Fisher extends TaskNode {
 
     private int fish() {
         if (Inventory.isFull()) {
+            Logger.log("BANK_FISH");
             state = State.BANK_FISH;
         }
         Logger.log("At spot. Looking for fishing spot: " + fishing_spot_name + ".");
@@ -107,7 +112,8 @@ public class Fisher extends TaskNode {
         if (fishing_spot != null && fishing_spot.exists() && fishing_spot.canReach()) {
             Logger.log("Found fishing spot");
             fishing_spot.interact(interact);
-            BotUtils.sleepWhileAnimating(() -> true, 30000, 500, 1000);
+            BotUtils.sleepWhileAnimating(() -> {return !Inventory.isFull();}, 30000, 500, 1000);
+            Logger.log("BotUtils loop broke.");
         } else {
             Logger.log("No fishing spot found.");
         }
@@ -117,11 +123,17 @@ public class Fisher extends TaskNode {
     private int bankFish() {
         if (feathers) {
             if (Inventory.onlyContains("Feather", rod_name)) {
+                Logger.log("FISHING");
                 state = State.FISHING;
+                return 0;
             }
         } else if (Inventory.onlyContains(rod_name)) {
+            Logger.log("FISHING");
             state = State.FISHING;
-        } else if (Bank.open()) {
+            return 0;
+        }
+
+        if (Bank.open()) {
             if (feathers) {
                 Bank.depositAllExcept(rod_name, "Feather");
             } else {

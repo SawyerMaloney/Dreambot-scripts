@@ -17,6 +17,7 @@ public class InventoryManager {
 
         if (ItemTracker.isTaskRequiredItem(item.getName())) {
             Logger.log("Item " + item.getName() + " removed from task required items.");
+            ItemTracker.removeTaskRequiredItem(item.getName());
         }
     }
 
