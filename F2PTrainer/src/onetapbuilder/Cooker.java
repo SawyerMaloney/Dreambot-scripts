@@ -50,7 +50,6 @@ public class Cooker extends TaskNode {
         } else if (!atBank) {
             if (bank_tile.distance() > 1) {
                 if (Walking.shouldWalk()) {
-                    Logger.log("Walking to Edgeville bank.");
                     Walking.walk(bank_tile);
                     return 500;
                 }
@@ -59,7 +58,6 @@ public class Cooker extends TaskNode {
             atBank = true;
         } else {
             if (!setupInventory) {
-                Logger.log("Setting up inv., grabbing fish.");
                 if (Bank.open()) {
                     // now grab fish
                     Bank.depositAllItems();
@@ -77,7 +75,6 @@ public class Cooker extends TaskNode {
                     // if we don't have anything in our inventory, quit because we have no fish
                     if (Inventory.isEmpty()) {
                         Logger.log("Nothing to cook!");
-                        ItemTracker.addItemToBuy(fishNames.get(0), 100, "Cooker");
                     } else if (inventoryHasRawFood()) {
                         // need this to know that we've reset our inventory fully
                         setupInventory = true;
@@ -87,7 +84,6 @@ public class Cooker extends TaskNode {
                 // cook fish
                 if (stove_tile.distance() > 5) {
                     if (Walking.shouldWalk()) {
-                        Logger.log("Walking to stove.");
                         Walking.walk(stove_tile);
                     }
                     return 500;

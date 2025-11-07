@@ -121,4 +121,19 @@ public class ItemTracker {
     public static void removeGatherItem(String itemName) {
         itemsToGather.remove(itemName);
     }
+
+    public static boolean isTaskRequiredItem(String itemName) {
+        for (String task : taskRequiredItems.keySet()) {
+            if (taskRequiredItems.get(task).contains(itemName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void removeTaskRequiredItem(String itemName) {
+        for (String task : taskRequiredItems.keySet()) {
+            taskRequiredItems.get(task).remove(itemName);
+        }
+    }
 }

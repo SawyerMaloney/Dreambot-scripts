@@ -1,5 +1,6 @@
 package onetapbuilder;
 
+import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Timer;
 
 import java.util.HashSet;
@@ -7,7 +8,7 @@ import java.util.Set;
 
 public class TaskScheduler {
     public static boolean init;
-    private static final long task_length = 300_000; // 5 minutes
+    private static final long task_length = 60_000; // 5 minutes
     private static final Timer timer = new Timer(task_length);
     private static final Set<String> finishedTasks = new HashSet<>();
     private static String currentTask = "";
@@ -39,9 +40,15 @@ public class TaskScheduler {
     }
 
     public static void init(String task) {
+        Logger.log("Initializing task " + task + ".");
         currentTask = task;
         finishedTasks.add(task);
         timer.reset();
         timer.start();
+        Logger.log("Current task: " + currentTask + ". Timer elapsed " + timer.elapsed() + ".");
+    }
+
+    public static void resetTimer() {
+        timer.reset();
     }
 }

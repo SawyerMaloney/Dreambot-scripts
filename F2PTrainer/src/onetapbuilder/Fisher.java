@@ -19,6 +19,13 @@ import java.util.List;
 import java.util.Map;
 
 public class Fisher extends TaskNode {
+    private enum State {
+        RETRIEVE_ITEMS,
+        WALK_TO_FISHING_SPOT,
+        FISHING,
+        BANK_FISH
+    };
+    private State state = State.RETRIEVE_ITEMS;
     private boolean initialized = false;
 
     private final Tile small_net_tile = new Tile(3241, 3149);
@@ -46,74 +53,75 @@ public class Fisher extends TaskNode {
         return TaskScheduler.valid("Fisher");
     }
 
-    private int retrieveItems() {
-        if (Bank.open()) {
-            Sleep.sleep(Calculations.random(0, 100));
-            if (feathers) {
-                Bank.depositAllExcept("Feather", rod_name);
-            } else {
-                Bank.depositAllExcept(rod_name);
-            }
-            Sleep.sleep(Calculations.random(500, 1000));
-            if (BotUtils.retrieveItem(rod_name, false) == -1) return -1;
-            Sleep.sleep(Calculations.random(500, 1000));
-            if (feathers) {
-                if (BotUtils.retrieveItem("Feather", true) == -1) return -1;
-                Sleep.sleep(Calculations.random(500, 1000));
-            }
-        }
-
-        return 1000 + Calculations.random(100, 300);
-    }
-
-    private void fish() {
-        Logger.log("At spot. Looking for fishing spot: " + fishing_spot_name + ".");
-        fishing = true;
-        NPC fishing_spot = NPCs.closest(fishing_spot_name);
-        Sleep.sleep(Calculations.random(100, 500));
-
-        if (fishing_spot != null && fishing_spot.exists() && fishing_spot.canReach()) {
-            Logger.log("Found fishing spot");
-            fishing_spot.interact(interact);
-            Sleep.sleepUntil(() -> Players.getLocal().isAnimating(), 5000);
-        } else {
-            Logger.log("No fishing spot found.");
-            fishing = false;
-        }
-    }
-
     @Override
     public int execute() {
         if (!initialized) {
             Logger.log("Initializing fisher.");
             initialize();
         }
-        if (!Inventory.contains(rod_name) || (feathers && !Inventory.contains("Feather"))) {
-            Logger.log("Missing rod or feathers.");
-            return retrieveItems();
-        }
-        else if (!Inventory.isFull()) {
-            if (!Players.getLocal().isAnimating()) {
-                if (destination.distance() > 10 && !fishing) {
-                    walkToSpot();
-                } else {
-                    fish();
-                }
-            }
-            else {
-                Logger.log("Busy fishing...");
-                return 5000;
-            }
-        } else {
-            Logger.log("Full inventory. Cooking or banking fish.");
-            fishing = false;
-            return bankFish();
+        switch (state) {
+            case RETRIEVE_ITEMS:
+                return retrieveItems();
+            case WALK_TO_FISHING_SPOT:
+                return walkToSpot();
+            case FISHING:
+                return fish();
+            case BANK_FISH:
+                return bankFish();
         }
         return 1000 + Calculations.random(100, 500);
     }
 
+    private int retrieveItems() {
+        if ((!Inventory.contains(rod_name) || (feathers && !Inventory.contains("Feather")))) {
+            if (Bank.open()) {
+                Sleep.sleep(Calculations.random(0, 100));
+                if (feathers) {
+                    Bank.depositAllExcept("Feather", rod_name);
+                } else {
+                    Bank.depositAllExcept(rod_name);
+                }
+                Sleep.sleep(Calculations.random(500, 1000));
+                if (BotUtils.retrieveItem(rod_name, false) == -1) return -1;
+                Sleep.sleep(Calculations.random(500, 1000));
+                if (feathers) {
+                    if (BotUtils.retrieveItem("Feather", true) == -1) return -1;
+                    Sleep.sleep(Calculations.random(500, 1000));
+                }
+            }
+        } else {
+            Logger.log("WALK_TO_FISHING_SPOT");
+            state = State.WALK_TO_FISHING_SPOT;
+        }
+
+        return 1000 + Calculations.random(100, 300);
+    }
+
+    private int fish() {
+        if (Inventory.isFull()) {
+            state = State.BANK_FISH;
+        }
+        Logger.log("At spot. Looking for fishing spot: " + fishing_spot_name + ".");
+        NPC fishing_spot = NPCs.closest(fishing_spot_name);
+
+        if (fishing_spot != null && fishing_spot.exists() && fishing_spot.canReach()) {
+            Logger.log("Found fishing spot");
+            fishing_spot.interact(interact);
+            BotUtils.sleepWhileAnimating(() -> true, 30000, 500, 1000);
+        } else {
+            Logger.log("No fishing spot found.");
+        }
+        return 1000 + Calculations.random(100, 300);
+    }
+
     private int bankFish() {
-        if (Bank.open()) {
+        if (feathers) {
+            if (Inventory.onlyContains("Feather", rod_name)) {
+                state = State.FISHING;
+            }
+        } else if (Inventory.onlyContains(rod_name)) {
+            state = State.FISHING;
+        } else if (Bank.open()) {
             if (feathers) {
                 Bank.depositAllExcept(rod_name, "Feather");
             } else {
@@ -124,13 +132,16 @@ public class Fisher extends TaskNode {
         return 1000;
     }
 
-    private void walkToSpot() {
-        if (Walking.shouldWalk()) {
-            Logger.log("Walking to spot...");
-            Walking.walk(destination);
+    private int walkToSpot() {
+        if (destination.distance() < 5) {
+            Logger.log("FISHING");
+            state = State.FISHING;
         } else {
-            Logger.log("Shouldn't walk. Waiting...");
+            if (Walking.shouldWalk()) {
+                Walking.walk(destination);
+            }
         }
+        return 500;
     }
 
     private void setNames() {

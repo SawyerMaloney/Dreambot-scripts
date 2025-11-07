@@ -25,7 +25,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     public void onStart() {
         Logger.log("Scheduler starting.");
         setFailLimit(3);
-        addNodes(new Init(), new ItemBuyer(), new Cooker(), new Fisher());
+        addNodes(new Init(), new ItemBuyer(), new Cooker(), new Fisher(), new TaskClearer());
     }
 
 

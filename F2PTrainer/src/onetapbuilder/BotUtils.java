@@ -33,7 +33,6 @@ public class BotUtils {
 
     public static boolean sleepWhileAnimating(BooleanSupplier returnPredicate, int timeout, int randomLower, int randomUpper) {
         AtomicLong lastAnimationTime = new AtomicLong(System.currentTimeMillis());
-        // wait while cooking
         return Sleep.sleepWhile(() -> {
             if (Players.getLocal().isAnimating()) {
                 lastAnimationTime.set(System.currentTimeMillis());
