@@ -123,13 +123,13 @@ public class Fisher extends TaskNode implements Resetable {
     private int bankFish() {
         if (feathers) {
             if (Inventory.onlyContains("Feather", rod_name)) {
-                Logger.log("FISHING");
-                state = State.FISHING;
+                Logger.log("WALK_TO_FISHING_SPOT");
+                state = State.WALK_TO_FISHING_SPOT;
                 return 0;
             }
         } else if (Inventory.onlyContains(rod_name)) {
-            Logger.log("FISHING");
-            state = State.FISHING;
+            Logger.log("WALK_TO_FISHING_SPOT");
+            state = State.WALK_TO_FISHING_SPOT;
             return 0;
         }
 
