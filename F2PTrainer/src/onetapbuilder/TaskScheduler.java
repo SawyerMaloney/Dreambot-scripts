@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class TaskScheduler {
     public static boolean init;
-    private static final long task_length = 600_000; // 5 minutes
+    private static final long task_length = 600_000;
     private static final Timer timer = new Timer(task_length);
     private static final Set<String> finishedTasks = new HashSet<>();
     private static String currentTask = "";
@@ -30,11 +30,12 @@ public class TaskScheduler {
     }
 
     private static boolean defaultValidCheck(String task) {
-        return !ItemTracker.taskRequiresItems(task) && !timer.finished() && !finishedTask(task);
-    }
-
-    private static boolean finishedTask(String task) {
-        return finishedTasks.contains(task) && !currentTask.equals(task);
+        if (timer.finished() && currentTask.equals(task)) {
+            Logger.log("Adding task " + task + " to finished tasks.");
+            finishedTasks.add(task);
+        }
+        // Logger.log("Checking task " + task + ", timer: " + timer.finished() + ". finishedTaskContains: " + finishedTasks.contains(task) + ". Current task: " + currentTask + ".");
+        return !ItemTracker.taskRequiresItems(task) && !finishedTasks.contains(task);
     }
 
     public static void clearFinishedTasks() {
@@ -44,7 +45,6 @@ public class TaskScheduler {
     public static void init(String task) {
         Logger.log("Initializing task " + task + ".");
         currentTask = task;
-        finishedTasks.add(task);
         timer.reset();
         timer.start();
         Logger.log("Current task: " + currentTask + ". Timer elapsed " + timer.elapsed() + ".");

@@ -23,14 +23,13 @@ public class Fisher extends TaskNode implements Resetable {
         WALK_TO_FISHING_SPOT,
         FISHING,
         BANK_FISH
-    };
+    }
     private State state = State.RETRIEVE_ITEMS;
     private boolean initialized = false;
 
     private final Tile small_net_tile = new Tile(3241, 3149);
     private final Tile fly_fishing_tile = new Tile(3108, 3433);
     private Tile destination = small_net_tile;
-    private boolean fishing = false;
     private String rod_name = "";
     private boolean feathers = false;
     private String interact = "";
@@ -50,6 +49,7 @@ public class Fisher extends TaskNode implements Resetable {
 
     public void reset() {
         initialized = false;
+        state = State.RETRIEVE_ITEMS;
     }
 
     @Override
@@ -106,13 +106,18 @@ public class Fisher extends TaskNode implements Resetable {
             Logger.log("BANK_FISH");
             state = State.BANK_FISH;
         }
+        if (feathers && !Inventory.contains("Feather")) {
+            Logger.log("Missing feathers.");
+            ItemTracker.addItemToBuy("Feather", 500, "Fisher");
+            return 500;
+        }
         Logger.log("At spot. Looking for fishing spot: " + fishing_spot_name + ".");
         NPC fishing_spot = NPCs.closest(fishing_spot_name);
 
         if (fishing_spot != null && fishing_spot.exists() && fishing_spot.canReach()) {
             Logger.log("Found fishing spot");
             fishing_spot.interact(interact);
-            BotUtils.sleepWhileAnimating(() -> {return !Inventory.isFull();}, 30000, 500, 1000);
+            BotUtils.sleepWhileAnimating(() -> !Inventory.isFull(), 60000, 500, 1000);
             Logger.log("BotUtils loop broke.");
         } else {
             Logger.log("No fishing spot found.");

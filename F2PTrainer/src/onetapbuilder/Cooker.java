@@ -129,11 +129,11 @@ public class Cooker extends TaskNode implements Resetable {
                             }
                         } else {
                             Logger.log("Could not click cook widget.");
-                            return -1;
+                            return 1000;
                         }
                     } else {
                         Logger.log("Couldn't not find stove.");
-                        return -1;
+                        return 1000;
                     }
                 }
             }

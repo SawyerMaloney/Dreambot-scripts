@@ -34,6 +34,17 @@ public class ItemTracker {
         }
     }
 
+    public static void addItemToGather(String itemName, String task) {
+        Logger.log("Adding item to gather: " + itemName + " for task " + task + ".");
+        itemsToGather.add(itemName);
+        if (taskRequiredItems.containsKey(task)) {
+            taskRequiredItems.get(task).add(itemName);
+        } else {
+            taskRequiredItems.put(task, new ArrayList<>());
+            taskRequiredItems.get(task).add(itemName);
+        }
+    }
+
     public static void addOrderedItem(String itemName) {
         int amount = itemsToBuy.get(itemName);
         Logger.log("Adding ordered item: " + itemName + " ("+amount+").");
@@ -53,17 +64,6 @@ public class ItemTracker {
     private static void removeTaskRequiredItems(String itemName) {
         for (String key : taskRequiredItems.keySet()) {
             taskRequiredItems.get(key).remove(itemName);
-        }
-    }
-
-    public static void addItemToGather(String itemName, String task) {
-        Logger.log("Adding item to gather: " + itemName + " for task " + task + ".");
-        itemsToGather.add(itemName);
-        if (taskRequiredItems.containsKey(task)) {
-            taskRequiredItems.get(task).add(itemName);
-        } else {
-            taskRequiredItems.put(task, new ArrayList<>());
-            taskRequiredItems.get(task).add(itemName);
         }
     }
 

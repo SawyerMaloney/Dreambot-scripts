@@ -24,7 +24,6 @@ public class ItemBuyer extends TaskNode {
         WAIT_FOR_ORDERS
     }
     private static State state = State.GO_TO_VARROCK;
-    private final Timer timer = new Timer(300_000);
 
     @Override
     public boolean accept() {
@@ -33,6 +32,8 @@ public class ItemBuyer extends TaskNode {
 
     @Override
     public int execute() {
+        // reset task specific flags, and timer
+        TaskClearer.reset();
         switch (state) {
             case GO_TO_VARROCK:
                 return goToVarrock();

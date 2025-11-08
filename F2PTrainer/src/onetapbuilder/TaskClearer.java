@@ -14,6 +14,12 @@ public class TaskClearer extends TaskNode {
     public int execute() {
         Logger.log("Clearing finished tasks.");
         TaskScheduler.clearFinishedTasks();
+        reset();
+        return 5000;
+    }
+
+    public static void reset() {
+        Logger.log("Resetting task specific flags.");
         TaskScheduler.resetTimer();
 
         // reset task specific flags
@@ -22,6 +28,5 @@ public class TaskClearer extends TaskNode {
                 ((Resetable) node).reset();
             }
         }
-        return 5000;
     }
 }
