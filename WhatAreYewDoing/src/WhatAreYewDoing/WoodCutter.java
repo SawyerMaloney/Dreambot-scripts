@@ -230,8 +230,11 @@ public class WoodCutter extends AbstractScript {
     }
 
     private int chop() {
-        // Find the nearest  tree
-        GameObject tree = GameObjects.closest(tree_name);
+        // Find the nearest tree
+        GameObject tree = GameObjects.closest(obj ->
+                obj.getName().equals(tree_name)
+                && obj.canReach()
+                && obj.getId() != 10041);
 
         if (tree != null && tree.exists() && tree.canReach()) {
             Logger.log("Found  tree at: " + tree.getTile());
