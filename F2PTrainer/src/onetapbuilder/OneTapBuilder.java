@@ -34,7 +34,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         nodes.add(new Init());
         nodes.add(new ItemBuyer());
         nodes.add(new Fisher());
-        // nodes.add(new Cooker());
+        nodes.add(new Cooker());
         nodes.add(new TaskClearer());
 
         for (TaskNode node : nodes) {

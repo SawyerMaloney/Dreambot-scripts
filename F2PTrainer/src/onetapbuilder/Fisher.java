@@ -117,8 +117,9 @@ public class Fisher extends TaskNode implements Resetable {
         if (fishing_spot != null && fishing_spot.exists() && fishing_spot.canReach()) {
             Logger.log("Found fishing spot");
             fishing_spot.interact(interact);
-            BotUtils.sleepWhileAnimating(() -> !Inventory.isFull(), 60000, 500, 1000);
-            Logger.log("BotUtils loop broke.");
+            if (BotUtils.sleepWhileAnimating(() -> !Inventory.isFull(), 60000, 500, 1000)) {
+                Logger.log("Timeout reached.");
+            }
         } else {
             Logger.log("No fishing spot found.");
         }

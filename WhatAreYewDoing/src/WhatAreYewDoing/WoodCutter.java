@@ -315,10 +315,10 @@ public class WoodCutter extends AbstractScript {
         // see if user has set tree
         if (yew || oak || tree) {
             Logger.log("Setting custom tree.");
-            if (yew) {
+            if (yew && skill >= 60) {
                 tree_name = "Yew tree";
                 destination = returnTreeSpot(yewTreeSpots);
-            } else if (oak) {
+            } else if (oak && skill >= 15) {
                 tree_name = "Oak tree";
                 destination = returnTreeSpot(oakTreeSpots);
             } else {
