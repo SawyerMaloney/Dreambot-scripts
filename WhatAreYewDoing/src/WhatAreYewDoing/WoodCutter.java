@@ -67,7 +67,7 @@ public class WoodCutter extends AbstractScript {
     private int inventories = 0;
     private int startExp;
 
-    private WoodCombat woodCombat = new WoodCombat();
+    private final WoodCombat woodCombat = new WoodCombat();
 
     @Override
     public void onStart(String... params) {
@@ -86,6 +86,8 @@ public class WoodCutter extends AbstractScript {
                     break;
                 case "usege":
                     useGE = true;
+                    break;
+                case "skipgui":
                     break;
                 default:
                     Logger.log("Unknown parameter: " + param);
@@ -196,7 +198,7 @@ public class WoodCutter extends AbstractScript {
             Item invCoins = Inventory.get("Coins");
             Item bankCoins = Bank.get("Coins");
             if (invCoins != null && bankCoins != null) {
-                if (LivePrices.getHigh(axe_name) > invCoins.getAmount() + bankCoins.getAmount()) {
+                if (LivePrices.getHigh(axe_name) * 1.10 > invCoins.getAmount() + bankCoins.getAmount()) {
                     Logger.log("Not enough coins to buy axe.");
                     useGE = false;
                     updateState(getPreviousState());
@@ -212,7 +214,7 @@ public class WoodCutter extends AbstractScript {
                     return -1;
                 } else {
                     Logger.log("Open slot. Adding buy item.");
-                    GrandExchange.buyItem(axe_name, 1, LivePrices.get(axe_name));
+                    GrandExchange.buyItem(axe_name, 1, (int) (LivePrices.get(axe_name) * 1.10));
                     Sleep.sleepUntil(() -> GrandExchange.isReadyToCollect(open_slot), 30000);
                     if (GrandExchange.isReadyToCollect()) {
                         GrandExchange.collect();
