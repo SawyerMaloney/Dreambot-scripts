@@ -16,6 +16,7 @@ import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.widgets.WidgetChild;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Cooker extends TaskNode implements Resetable, SellableProducer, ResourceNode {
@@ -191,5 +192,15 @@ public class Cooker extends TaskNode implements Resetable, SellableProducer, Res
         resources.add("Shrimps");
         resources.add("Anchovies");
         return resources;
+    }
+
+    @Override
+    public List<String> getProducedItems() {
+        List<String> producedItems = new ArrayList<>();
+        producedItems.add("Salmon");
+        producedItems.add("Shrimps");
+        producedItems.add("Anchovies");
+        producedItems.add("Trout");
+        return producedItems;
     }
 }

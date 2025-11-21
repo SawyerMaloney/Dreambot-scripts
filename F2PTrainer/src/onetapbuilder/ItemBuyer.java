@@ -66,7 +66,7 @@ public class ItemBuyer extends TaskNode {
     }
 
     private int placeOrder() {
-        Iterator<Map.Entry<String, Integer>> iter = ItemTracker.neededItems();
+        Iterator<Map.Entry<String, Integer>> iter = ItemTracker.itemsToBuy();
         while (iter.hasNext() && GrandExchange.getFirstOpenSlot() != -1) {
             Map.Entry<String, Integer> item = iter.next();
             String itemName = item.getKey();

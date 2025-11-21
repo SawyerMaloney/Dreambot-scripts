@@ -19,9 +19,15 @@ import org.dreambot.api.wrappers.interactive.Player;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.wrappers.widgets.WidgetChild;
 
+import javax.annotation.Resource;
 import java.util.*;
 
-public class Firemaker extends TaskNode {
+public class Firemaker extends TaskNode implements Resetable, ResourceNode {
+    @Override
+    public List<String> getProducedItems() {
+        return Collections.emptyList();
+    }
+
     private enum State {
         WALKING_TO_BANK,
         RETRIEVE_WOOD,
@@ -41,6 +47,11 @@ public class Firemaker extends TaskNode {
     @Override
     public boolean accept() {
         return TaskScheduler.valid("Firemaker") && hasBurnableItems();
+    }
+
+    @Override
+    public void reset() {
+        state = State.WALKING_TO_BANK;
     }
 
     @Override

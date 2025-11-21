@@ -13,9 +13,7 @@ import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.wrappers.interactive.NPC;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Fisher extends TaskNode implements Resetable, ResourceNode {
     private enum State {
@@ -172,7 +170,7 @@ public class Fisher extends TaskNode implements Resetable, ResourceNode {
 
         // check if we need to gather a particular fish, and if we have the skill to do so,
         // try to get the highest skill level fish we can, for max XP
-        List<String> neededItems = ItemTracker.getFishableNeededItems();
+        List<String> neededItems = getFishableNeededItems();
         if (!neededItems.isEmpty()) {
             // check if we can fish them
             for (String fish : neededItems) {
@@ -222,5 +220,27 @@ public class Fisher extends TaskNode implements Resetable, ResourceNode {
         fishSpotMap.put("Raw anchovies", small_net_tile);
         fishSpotMap.put("Raw trout", fly_fishing_tile);
         fishSpotMap.put("Raw salmon", fly_fishing_tile);
+    }
+
+    private List<String> getFishableNeededItems() {
+        List<String> fishableNeededItems = new ArrayList<>();
+        List<String> neededItems = ItemTracker.getItemsToGather();
+        List<String> producedItems = getProducedItems();
+        for (String item : neededItems) {
+            if (producedItems.contains(item)) {
+                fishableNeededItems.add(item);
+            }
+        }
+        return fishableNeededItems;
+    }
+
+    @Override
+    public List<String> getProducedItems() {
+        List<String> producedItems = new ArrayList<>();
+        producedItems.add("Raw shrimps");
+        producedItems.add("Raw anchovies");
+        producedItems.add("Raw trout");
+        producedItems.add("Raw salmon");
+        return producedItems;
     }
 }

@@ -19,10 +19,6 @@ public class ItemTracker  {
     // Map that allows us to block execution for scripts that have items we're yet to get
     private final static Map<String, List<String>> taskRequiredItems = new HashMap<>();
 
-    private static final List<String> gatherableItems = Arrays.asList("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon", "Logs", "Oak logs", "Yew logs", "Maple logs", "Willow logs");
-    private static final List<String> fishableItems = Arrays.asList("Raw shrimps", "Raw anchovies", "Raw trout", "Raw salmon");
-    private static final List<String> cuttableItems = Arrays.asList("Logs", "Oak logs", "Yew logs", "Willow Logs", "Maple logs");
-
     public static void addItemToBuy(String itemName, int amount, String task) {
         Logger.log("Adding needed item: " + itemName + " ("+amount+").");
         if (itemsToBuy.containsKey(itemName)) {
@@ -71,7 +67,7 @@ public class ItemTracker  {
         }
     }
 
-    public static Iterator<Map.Entry<String, Integer>> neededItems() {
+    public static Iterator<Map.Entry<String, Integer>> itemsToBuy() {
         return itemsToBuy.entrySet().iterator();
     }
 
@@ -82,24 +78,21 @@ public class ItemTracker  {
     public static boolean needsBuyableItems() {
         List<String> items = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : itemsToBuy.entrySet()) {
-            if (!gatherableItems.contains(entry.getKey())) {
+            if (!gatherableItems().contains(entry.getKey())) {
                 items.add(entry.getKey());
             }
         }
         return !items.isEmpty();
     }
 
-    // TODO change these to an interface for easier usage
-
-    public static List<String> getFishableNeededItems() {
-        List<String> fishableNeededItems = new ArrayList<>();
-        for (String item : itemsToGather) {
-            if (fishableItems.contains(item)) {
-                Logger.log("adding fishable item " + item + ".");
-                fishableNeededItems.add(item);
+    public static List<String> gatherableItems() {
+        List<String> gatherables = new ArrayList<>();
+        for (TaskNode node : OneTapBuilder.nodes) {
+            if (node instanceof ResourceNode) {
+                gatherables.addAll(((ResourceNode) node).getProducedItems());
             }
         }
-        return fishableNeededItems;
+        return gatherables;
     }
 
     public static boolean taskRequiresItems(String taskName) {
@@ -161,5 +154,9 @@ public class ItemTracker  {
             }
         }
         return numberSellableResources;
+    }
+
+    public static List<String> getItemsToGather() {
+        return itemsToGather;
     }
 }

@@ -10,16 +10,14 @@ import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.walking.impl.Walking;
 
 import org.dreambot.api.script.TaskNode;
+import org.dreambot.api.utilities.Hash;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-public class TreeCutter extends TaskNode {
-
+public class TreeCutter extends TaskNode implements Resetable, ResourceNode {
     private enum State {WALKING_TO_BANK, WALKING_TO_TREE, CHOP, BUY_AXE}
     private State state = State.WALKING_TO_BANK;
     private boolean initialized = false;
@@ -41,6 +39,7 @@ public class TreeCutter extends TaskNode {
     ));
 
     private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Adamant axe", "Mithril axe", "Rune axe"));
+    private final Map<String, Integer> treeSkillMap = new HashMap();
     private int axe_index = 0;
 
     private Tile destination;
@@ -53,8 +52,14 @@ public class TreeCutter extends TaskNode {
         return TaskScheduler.valid("TreeCutter");
     }
 
+    @Override
+    public void reset() {
+        state = State.WALKING_TO_BANK;
+    }
+
     private int initialize() {
         Logger.log("Current woodcutting skill: " + Skills.getRealLevel(Skill.WOODCUTTING));
+        addTreeSkillMappings();
         updateTreeAndAxe();
         if (Inventory.contains(axe_name)) {
             state = State.WALKING_TO_TREE;
@@ -147,6 +152,7 @@ public class TreeCutter extends TaskNode {
 
     private void updateTreeAndAxe() {
         int skill = Skills.getRealLevel(Skill.WOODCUTTING);
+        String taskRequiredLog = getTaskRequiredLog();
 
         // set axe
         if (skill >= 41) {
@@ -161,17 +167,62 @@ public class TreeCutter extends TaskNode {
 
         axe_name = axeNames.get(axe_index);
 
-        // set tree
-        if (skill >= 60) {
-            tree_name = "Yew tree";
-            destination = returnTreeSpot(yewTreeSpots);
-        } else if (skill >= 15) {
-            tree_name = "Oak tree";
-            destination = returnTreeSpot(oakTreeSpots);
+        if (!taskRequiredLog.isEmpty()) {
+            switch (taskRequiredLog) {
+                case "Logs":
+                    tree_name = "Tree";
+                    destination = returnTreeSpot(treeSpots);
+                    break;
+                case "Oak logs":
+                    tree_name = "Oak tree";
+                    destination = returnTreeSpot(oakTreeSpots);
+                    break;
+                case "Yew logs":
+                    tree_name = "Yew tree";
+                    destination = returnTreeSpot(yewTreeSpots);
+            }
         } else {
-            destination = returnTreeSpot(treeSpots);
+            // set tree
+            if (skill >= 60) {
+                tree_name = "Yew tree";
+                destination = returnTreeSpot(yewTreeSpots);
+            } else if (skill >= 15) {
+                tree_name = "Oak tree";
+                destination = returnTreeSpot(oakTreeSpots);
+            } else {
+                destination = returnTreeSpot(treeSpots);
+            }
         }
 
         Logger.log("Current axe name: " + axe_name + ". Current tree name: " + tree_name);
+    }
+
+    private String getTaskRequiredLog() {
+        List<String> logs = getProducedItems();
+        int woodcuttingSkill = Skills.getRealLevel(Skill.WOODCUTTING);
+
+        for (String item : ItemTracker.getItemsToGather()) {
+            if (logs.contains(item)) {
+                if (treeSkillMap.get(item) <= woodcuttingSkill) {
+                    return item;
+                }
+            }
+        }
+        return "";
+    }
+
+    @Override
+    public List<String> getProducedItems() {
+        List<String> logs = new ArrayList<>();
+        logs.add("Logs");
+        logs.add("Oak logs");
+        logs.add("Yew logs");
+        return logs;
+    }
+
+    private void addTreeSkillMappings() {
+        treeSkillMap.put("Logs", 1);
+        treeSkillMap.put("Oak logs", 15);
+        treeSkillMap.put("Yew logs", 60);
     }
 }
