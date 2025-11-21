@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class TaskScheduler {
     public static boolean init;
-    private static final long task_length = 600_000;
+    private static final long task_length = 1200_000;
     private static final Timer timer = new Timer(task_length);
     private static final Set<String> finishedTasks = new HashSet<>();
     private static String currentTask = "";
@@ -17,7 +17,7 @@ public class TaskScheduler {
     public static boolean valid(String task) {
         switch (task) {
             case "ItemSeller":
-                return ItemTracker.getNumberSellableResources() > 100 || OneTapBuilder.selling;
+                return ItemTracker.getNumberSellableResources() > 500 || OneTapBuilder.selling;
             case "ItemBuyer":
                 return (ItemTracker.needsBuyableItems() || ItemTracker.hasOrderedItems()) && !OneTapBuilder.needGold;
             case "BonesCollector":
@@ -25,6 +25,7 @@ public class TaskScheduler {
             case "Init":
                 return !init;
             case "TaskClearer":
+                Logger.log("TaskClearer valid.");
                 return finishedAllTasks();
             default:
                 return defaultValidCheck(task);

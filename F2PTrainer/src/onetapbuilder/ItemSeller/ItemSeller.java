@@ -71,18 +71,31 @@ public class ItemSeller extends TaskNode implements Resetable {
             GrandExchange.collectToBank();
             Logger.log("CONFIRM_OPEN_SPOT");
             state = State.CONFIRM_OPEN_SPOT;
-        } else if (GrandExchange.getFirstOpenSlot() != -1) {
+        } else if (GrandExchange.getFirstOpenSlot() != -1 && ItemTracker.getNumberSellableResources() != 0) {
             Logger.log("CONFIRM_OPEN_SPOT");
             state = State.CONFIRM_OPEN_SPOT;
+        } else if (bankContainsSellable()) {
+            state = State.RETRIEVE_ITEMS;
         } else {
+            Logger.log("Sleeping ten seconds.");
             Sleep.sleepUntil(GrandExchange::isReadyToCollect, 10000);
         }
         return 500;
     }
 
+    private boolean bankContainsSellable() {
+        for (String sellableResource : sellableResources) {
+            if (Bank.contains(sellableResource)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private int sellItem() {
         List<Item> inventoryItems = Inventory.all().stream()
                 .filter(Objects::nonNull)
+                .filter(obj -> sellableResources.contains(obj.getName()))
                 .collect(Collectors.toList());
 
         if (inventoryItems.isEmpty()) {
@@ -97,9 +110,10 @@ public class ItemSeller extends TaskNode implements Resetable {
             Logger.log("itemToSell is null.");
             return -1;
         }
+        // TODO make this update the price dynamically as it doesn't sell, or just skip entirely
         Logger.log("Selling " + itemToSell.getName() + " with live price " + itemToSell.getLivePrice() + " and amount " + itemToSell.getAmount());
         Sleep.sleepUntil(() -> {
-            return GrandExchange.sellItem(itemToSell.getName(), itemToSell.getAmount(), (int) (itemToSell.getLivePrice() * .9));
+            return GrandExchange.sellItem(itemToSell.getName(), itemToSell.getAmount(), (int) (itemToSell.getLivePrice() * .75));
         }, 5000);
         Logger.log("CONFIRM_OPEN_SPOT");
         state = State.CONFIRM_OPEN_SPOT;
@@ -112,6 +126,7 @@ public class ItemSeller extends TaskNode implements Resetable {
             if (ItemTracker.getNumberSellableResources() == 0) {
                 Logger.log("No more items to sell.");
                 OneTapBuilder.selling = false;
+                state = State.RETRIEVE_ITEMS;
                 return true;
             } else {
                 Logger.log("Waiting for selling to complete.");
