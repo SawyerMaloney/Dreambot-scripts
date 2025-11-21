@@ -1,6 +1,6 @@
-package onetapbuilder;
+package onetapbuilder.Firemaker;
 
-import org.apache.tools.ant.Task;
+import onetapbuilder.*;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -20,7 +20,6 @@ import org.dreambot.api.wrappers.interactive.Player;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.wrappers.widgets.WidgetChild;
 
-import javax.annotation.Resource;
 import java.util.*;
 
 public class Firemaker extends TaskNode implements Resetable, ResourceNode {
@@ -29,7 +28,7 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
         return Collections.emptyList();
     }
 
-    private enum State {
+    enum State {
         WALKING_TO_BANK,
         RETRIEVE_WOOD,
         FIND_OPEN_SPOT,
@@ -37,10 +36,10 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
         BURN_WOOD
     }
 
-    private String logName = "";
-    private State state = State.WALKING_TO_BANK;
+    static String logName = "";
+    static State state = State.WALKING_TO_BANK;
 
-    private GameObject fire;
+    static GameObject fire;
 
     private final List<String> logNames = Arrays.asList("Yew logs", "Maple logs", "Willow logs", "Oak logs", "Logs");
     private final List<String> burnableLogs = new ArrayList<>();
@@ -75,36 +74,9 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
             case FIND_OPEN_SPOT:
                 return findOpenSpot();
             case FIND_FIRE:
-                return findFire();
+                return FindFire.findFire();
             case BURN_WOOD:
                 return burnWood();
-        }
-        return 500;
-    }
-
-    private int findFire() {
-        GameObject fire = GameObjects.closest("Forester's Campfire");
-        if (fire != null && fire.exists() && fire.distance() < 5) {
-            Logger.log("Nearby Forester's Campfire found.");
-            this.fire = fire;
-            Logger.log("BURN_WOOD");
-            state = State.BURN_WOOD;
-            return 0;
-        } else {
-            if (fire == null) {
-                Logger.log("Fire null");
-            } else {
-                Logger.log("null: false. exists: " + fire.exists() + ". distance: " + fire.distance());
-            }
-        }
-        Item tinderbox = Inventory.get("Tinderbox");
-        if (tinderbox != null) {
-            Logger.log("Got tinderbox. Using on " + logName + ".");
-            tinderbox.useOn(logName);
-            BotUtils.sleepWhileAnimating(() -> true, 10000, 500, 1000);
-            fire = GameObjects.closest("Fire");
-            Logger.log("BURN_WOOD");
-            state = State.BURN_WOOD;
         }
         return 500;
     }
@@ -187,12 +159,12 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
             if (!Inventory.contains("Tinderbox")) {
                 if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
                     Logger.error("Failed to withdraw tinderbox.");
-                    ItemTracker.addItemToBuy("Tinderbox", 1, "Firemaker");
+                    ItemTracker.addItem("Tinderbox", "Firemaker", 1);
                     return 500;
                 }
                 if (!Sleep.sleepUntil(() -> Inventory.contains("Tinderbox"), 5000)) {
                     Logger.error("Did not find tinderbox in inventory.");
-                    return -1;
+                    return 0;
                 }
             }
 
@@ -206,7 +178,7 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
                 Logger.log("Failed to withdraw logs " + logName + ".");
                 if (!Bank.contains(logName)) {
                     // TODO get exact number of logs needed so we don't overbuy
-                    ItemTracker.addItemToBuy(logName, 100, "Firemaker");
+                    ItemTracker.addItem(logName, "Firemaker", 100);
                     logName = stepDownOneLog();
                     if (logName.isEmpty()) {
                         Logger.log("No usable logs.");

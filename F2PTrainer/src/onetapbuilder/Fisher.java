@@ -84,7 +84,7 @@ public class Fisher extends TaskNode implements Resetable, ResourceNode {
                     Bank.depositAllExcept(rod_name);
                 }
                 if (feathers && !Inventory.contains("Feather") && !Bank.contains("Feather")) {
-                    ItemTracker.addItemToBuy("Feather", 500, "Fisher");
+                    ItemTracker.addItem("Feather", "Fisher", 500);
                     return 0;
                 }
                 Sleep.sleep(Calculations.random(500, 1000));
@@ -110,7 +110,7 @@ public class Fisher extends TaskNode implements Resetable, ResourceNode {
         }
         if (feathers && !Inventory.contains("Feather")) {
             Logger.log("Missing feathers.");
-            ItemTracker.addItemToBuy("Feather", 500, "Fisher");
+            ItemTracker.addItemToBuy("Feather", "Fisher", 500);
             return 500;
         }
         Logger.log("At spot. Looking for fishing spot: " + fishing_spot_name + ".");

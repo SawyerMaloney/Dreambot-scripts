@@ -19,7 +19,7 @@ public class ItemTracker  {
     // Map that allows us to block execution for scripts that have items we're yet to get
     private final static Map<String, List<String>> taskRequiredItems = new HashMap<>();
 
-    public static void addItemToBuy(String itemName, int amount, String task) {
+    public static void addItemToBuy(String itemName, String task, int amount) {
         Logger.log("Adding needed item: " + itemName + " ("+amount+").");
         if (itemsToBuy.containsKey(itemName)) {
             itemsToBuy.put(itemName, itemsToBuy.get(itemName) + amount);
@@ -155,7 +155,7 @@ public class ItemTracker  {
         if (gatherableItems.contains(item)) {
             addItemToGather(item, task);
         } else {
-            addItemToBuy(item, amount, task);
+            addItemToBuy(item, task, amount);
         }
 
         if (taskRequiredItems.containsKey(task)) {

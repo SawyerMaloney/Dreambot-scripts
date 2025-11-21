@@ -1,5 +1,6 @@
 package onetapbuilder;
 
+import onetapbuilder.Firemaker.Firemaker;
 import onetapbuilder.ItemSeller.ItemSeller;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
