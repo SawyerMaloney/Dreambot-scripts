@@ -85,6 +85,10 @@ public class Fisher extends TaskNode implements Resetable, ResourceNode {
                 } else {
                     Bank.depositAllExcept(rod_name);
                 }
+                if (feathers && !Inventory.contains("Feather") && !Bank.contains("Feather")) {
+                    ItemTracker.addItemToBuy("Feather", 500, "Fisher");
+                    return 0;
+                }
                 Sleep.sleep(Calculations.random(500, 1000));
                 if (BotUtils.retrieveItem(rod_name, false) == -1) return -1;
                 Sleep.sleep(Calculations.random(500, 1000));

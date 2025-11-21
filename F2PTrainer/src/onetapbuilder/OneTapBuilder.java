@@ -20,7 +20,6 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     public static boolean canCast = true;
 
     private static int gold = 0;
-    public static boolean needGold = true;
     public static boolean selling = false;
 
     public static List<TaskNode> nodes = new ArrayList<>();

@@ -19,9 +19,7 @@ public class TaskScheduler {
             case "ItemSeller":
                 return ItemTracker.getNumberSellableResources() > 500 || OneTapBuilder.selling;
             case "ItemBuyer":
-                return (ItemTracker.needsBuyableItems() || ItemTracker.hasOrderedItems()) && !OneTapBuilder.needGold;
-            case "BonesCollector":
-                return defaultValidCheck(task) && OneTapBuilder.needGold;
+                return (ItemTracker.needsBuyableItems() || ItemTracker.hasOrderedItems());
             case "Init":
                 return !init;
             case "TaskClearer":

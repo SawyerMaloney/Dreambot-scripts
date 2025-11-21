@@ -31,8 +31,6 @@ public class ItemBuyer extends TaskNode {
 
     @Override
     public int execute() {
-        // reset task specific flags, and timer
-        TaskClearer.reset();
         switch (state) {
             case GO_TO_VARROCK:
                 return goToVarrock();

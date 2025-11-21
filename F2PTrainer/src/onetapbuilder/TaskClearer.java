@@ -7,6 +7,7 @@ import org.dreambot.api.utilities.Logger;
 public class TaskClearer extends TaskNode {
     @Override
     public boolean accept() {
+        Logger.log("Calling TaskClearer");
         return TaskScheduler.valid("TaskClearer");
     }
 

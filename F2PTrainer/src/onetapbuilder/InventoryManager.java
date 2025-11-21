@@ -16,6 +16,10 @@ public class InventoryManager {
             Logger.log("Item " + item.getName() + " removed from task required items.");
             ItemTracker.removeTaskRequiredItem(item.getName());
         }
+
+        if (ItemTracker.isOrderedItem(item.getName())) {
+            ItemTracker.removeOrderedItem(item.getName());
+        }
     }
 
     public static void onInventoryItemChanged(Item incoming, Item existing) {
