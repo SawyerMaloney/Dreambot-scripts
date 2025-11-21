@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class TaskScheduler {
     public static boolean init;
-    private static final long task_length = 600_000;
+    private static final long task_length = 60_000;
     private static final Timer timer = new Timer(task_length);
     private static final Set<String> finishedTasks = new HashSet<>();
     private static String currentTask = "";
@@ -35,7 +35,12 @@ public class TaskScheduler {
             finishedTasks.add(task);
         }
         // Logger.log("Checking task " + task + ", timer: " + timer.finished() + ". finishedTaskContains: " + finishedTasks.contains(task) + ". Current task: " + currentTask + ".");
-        return !ItemTracker.taskRequiresItems(task) && !finishedTasks.contains(task);
+        boolean ret = !ItemTracker.taskRequiresItems(task) && !finishedTasks.contains(task);
+        if (!ret && currentTask.equals(task)) {
+            Logger.log("Task " + task + " cannot continue, adding to finished tasks.");
+            finishedTasks.add(task);
+        }
+        return ret;
     }
 
     public static void clearFinishedTasks() {
@@ -54,8 +59,7 @@ public class TaskScheduler {
         timer.reset();
     }
 
-    // TODO this needs to be updated in case the last one quits w/o reaching timer
     public static boolean finishedAllTasks() {
-        return finishedTasks.size() == OneTapBuilder.nodes.size() - 3 && timer.finished();
+        return finishedTasks.size() == OneTapBuilder.nodes.size() - 3;
     }
 }

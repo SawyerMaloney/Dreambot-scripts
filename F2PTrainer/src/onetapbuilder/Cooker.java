@@ -18,7 +18,7 @@ import org.dreambot.api.wrappers.widgets.WidgetChild;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Cooker extends TaskNode implements Resetable {
+public class Cooker extends TaskNode implements Resetable, SellableProducer {
 
     private final Tile bank_tile = new Tile(3094, 3489);
     private final Tile stove_tile = new Tile(3078, 3495);
@@ -176,5 +176,20 @@ public class Cooker extends TaskNode implements Resetable {
         } else {
             return true;
         }
+    }
+
+    @Override
+    public List<String> getSellableResources() {
+        List<String> resources = new ArrayList<>();
+        int cookingSkill = Skills.getRealLevel(Skill.COOKING);
+        if (cookingSkill >= 25) {
+            resources.add("Salmon");
+        }
+        if (cookingSkill >= 15) {
+            resources.add("Trout");
+        }
+        resources.add("Shrimps");
+        resources.add("Anchovies");
+        return resources;
     }
 }
