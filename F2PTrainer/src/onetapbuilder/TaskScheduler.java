@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class TaskScheduler {
     public static boolean init;
-    private static final long task_length = 1200_000;
+    private static final long task_length = 300_000;
     private static final Timer timer = new Timer(task_length);
     private static final Set<String> finishedTasks = new HashSet<>();
     private static String currentTask = "";

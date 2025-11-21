@@ -64,6 +64,7 @@ public class TreeCutter extends TaskNode implements Resetable, ResourceNode {
         if (Inventory.contains(axe_name)) {
             state = State.WALKING_TO_TREE;
         }
+        TaskScheduler.init("TreeCutter");
         Logger.log("Starting script with axe " + axe_name + " and tree " + tree_name + ", state: " + state + ".");
         return 1;
     }
@@ -136,7 +137,7 @@ public class TreeCutter extends TaskNode implements Resetable, ResourceNode {
                     Sleep.sleepUntil(() -> Bank.withdraw(axe_name), 3000);
                 } else {
                     Logger.log("Need axe " + axe_name + ". Adding to needed items.");
-                    ItemTracker.addItemToBuy(axe_name, 1, "TreeCutter");
+                    ItemTracker.addItem(axe_name, "TreeCutter", 1);
                 }
             }
             Sleep.sleepUntil(() -> Inventory.contains(axe_name), 5000);

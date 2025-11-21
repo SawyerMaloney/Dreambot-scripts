@@ -26,23 +26,11 @@ public class ItemTracker  {
         } else {
             itemsToBuy.put(itemName, amount);
         }
-        if (taskRequiredItems.containsKey(task)) {
-            taskRequiredItems.get(task).add(itemName);
-        }  else {
-            taskRequiredItems.put(task, new ArrayList<>());
-            taskRequiredItems.get(task).add(itemName);
-        }
     }
 
     public static void addItemToGather(String itemName, String task) {
         Logger.log("Adding item to gather: " + itemName + " for task " + task + ".");
         itemsToGather.add(itemName);
-        if (taskRequiredItems.containsKey(task)) {
-            taskRequiredItems.get(task).add(itemName);
-        } else {
-            taskRequiredItems.put(task, new ArrayList<>());
-            taskRequiredItems.get(task).add(itemName);
-        }
     }
 
     public static void addOrderedItem(String itemName) {
@@ -159,4 +147,27 @@ public class ItemTracker  {
     public static List<String> getItemsToGather() {
         return itemsToGather;
     }
+
+    // add item--if gatherable, add it to items to gather
+    // otherwise, add it to buyable items
+    public static void addItem(String item, String task, int amount) {
+        List<String> gatherableItems = gatherableItems();
+        if (gatherableItems.contains(item)) {
+            addItemToGather(item, task);
+        } else {
+            addItemToBuy(item, amount, task);
+        }
+
+        if (taskRequiredItems.containsKey(task)) {
+            taskRequiredItems.get(task).add(item);
+        }  else {
+            taskRequiredItems.put(task, new ArrayList<>());
+            taskRequiredItems.get(task).add(item);
+        }
+    }
+
+    public static void addItem(String item, String task) {
+        addItem(item, task, 1);
+    }
+
 }

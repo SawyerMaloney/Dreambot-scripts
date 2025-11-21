@@ -1,5 +1,6 @@
 package onetapbuilder;
 
+import org.apache.tools.ant.Task;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -44,9 +45,11 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
     private final List<String> logNames = Arrays.asList("Yew logs", "Maple logs", "Willow logs", "Oak logs", "Logs");
     private final List<String> burnableLogs = new ArrayList<>();
 
+    private boolean init = false;
+
     @Override
     public boolean accept() {
-        return TaskScheduler.valid("Firemaker") && hasBurnableItems();
+        return TaskScheduler.valid("Firemaker");
     }
 
     @Override
@@ -54,8 +57,16 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
         state = State.WALKING_TO_BANK;
     }
 
+    private void init() {
+        TaskScheduler.init("Firemaker");
+        init = true;
+    }
+
     @Override
     public int execute() {
+        if (!init) {
+            init();
+        }
         switch (state) {
             case WALKING_TO_BANK:
                 return walkToBank();
