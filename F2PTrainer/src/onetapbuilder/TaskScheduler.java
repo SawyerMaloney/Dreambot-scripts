@@ -1,12 +1,10 @@
 package onetapbuilder;
 
-import onetapbuilder.ItemSeller.ItemSeller;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Timer;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class TaskScheduler {
     public static boolean init;
@@ -65,7 +63,7 @@ public class TaskScheduler {
 
     public static boolean finishedAllTasks() {
         int numberOfTasks = (int) OneTapBuilder.nodes.stream()
-                .filter(node -> node instanceof Task)
+                .filter(node -> node instanceof ResourceNode)
                 .count();
         return finishedTasks.size() == numberOfTasks;
     }

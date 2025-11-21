@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Fisher extends TaskNode implements Resetable, Task {
+public class Fisher extends TaskNode implements Resetable, ResourceNode {
     private enum State {
         RETRIEVE_ITEMS,
         WALK_TO_FISHING_SPOT,
