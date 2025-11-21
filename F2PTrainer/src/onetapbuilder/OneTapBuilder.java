@@ -1,7 +1,6 @@
 package onetapbuilder;
 
-import org.dreambot.api.Client;
-import org.dreambot.api.methods.map.Tile;
+import onetapbuilder.ItemSeller.ItemSeller;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.TaskNode;
@@ -20,9 +19,9 @@ import java.util.List;
 public class OneTapBuilder extends TaskScript implements ItemContainerListener {
     public static boolean canCast = true;
 
-    public static final Tile geTile = new Tile(3162, 3487);
     private static int gold = 0;
-    public final static boolean needGold = false;
+    public static boolean needGold = true;
+    public static boolean selling = false;
 
     public static List<TaskNode> nodes = new ArrayList<>();
 
@@ -32,6 +31,7 @@ public class OneTapBuilder extends TaskScript implements ItemContainerListener {
         Logger.log("Scheduler starting.");
         setFailLimit(3);
         nodes.add(new Init());
+        nodes.add(new ItemSeller());
         nodes.add(new ItemBuyer());
         nodes.add(new Fisher());
         nodes.add(new Cooker());

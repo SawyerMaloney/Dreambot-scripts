@@ -18,7 +18,7 @@ import org.dreambot.api.wrappers.widgets.WidgetChild;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Cooker extends TaskNode implements Resetable, SellableProducer {
+public class Cooker extends TaskNode implements Resetable, SellableProducer, Task {
 
     private final Tile bank_tile = new Tile(3094, 3489);
     private final Tile stove_tile = new Tile(3078, 3495);

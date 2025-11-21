@@ -149,9 +149,9 @@ public class Firemaker extends TaskNode {
 
     private int walkToBank() {
         setLogName();
-        if (OneTapBuilder.geTile.distance() > 10) {
+        if (BotUtils.geTile.distance() > 10) {
             if (Walking.shouldWalk()) {
-                Walking.walk(OneTapBuilder.geTile);
+                Walking.walk(BotUtils.geTile);
             }
         } else {
             Logger.log("RETRIEVE_WOOD");

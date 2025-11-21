@@ -1,14 +1,16 @@
 package onetapbuilder;
 
+import onetapbuilder.ItemSeller.ItemSeller;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Timer;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TaskScheduler {
     public static boolean init;
-    private static final long task_length = 60_000;
+    private static final long task_length = 600_000;
     private static final Timer timer = new Timer(task_length);
     private static final Set<String> finishedTasks = new HashSet<>();
     private static String currentTask = "";
@@ -16,6 +18,8 @@ public class TaskScheduler {
 
     public static boolean valid(String task) {
         switch (task) {
+            case "ItemSeller":
+                return ItemTracker.getNumberSellableResources() > 100 || OneTapBuilder.selling;
             case "ItemBuyer":
                 return (ItemTracker.needsBuyableItems() || ItemTracker.hasOrderedItems()) && !OneTapBuilder.needGold;
             case "BonesCollector":
@@ -60,6 +64,9 @@ public class TaskScheduler {
     }
 
     public static boolean finishedAllTasks() {
-        return finishedTasks.size() == OneTapBuilder.nodes.size() - 3;
+        int numberOfTasks = (int) OneTapBuilder.nodes.stream()
+                .filter(node -> node instanceof Task)
+                .count();
+        return finishedTasks.size() == numberOfTasks;
     }
 }

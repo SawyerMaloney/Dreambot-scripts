@@ -1,10 +1,14 @@
 package onetapbuilder;
 
+import org.dreambot.api.methods.container.impl.Inventory;
+import org.dreambot.api.methods.container.impl.bank.Bank;
+import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
+import org.dreambot.api.wrappers.items.Item;
 
 import java.util.*;
 
-public class ItemTracker {
+public class ItemTracker  {
     // Maps for ItemBuyer, tracking items we need to place orders for,
     // and items we already have placed orders for.
     private final static Map<String, Integer> itemsToBuy = new HashMap<>();
@@ -85,6 +89,8 @@ public class ItemTracker {
         return !items.isEmpty();
     }
 
+    // TODO change these to an interface for easier usage
+
     public static List<String> getFishableNeededItems() {
         List<String> fishableNeededItems = new ArrayList<>();
         for (String item : itemsToGather) {
@@ -94,16 +100,6 @@ public class ItemTracker {
             }
         }
         return fishableNeededItems;
-    }
-
-    public static List<String> getCuttableNeededItems() {
-        List<String> cuttableNeededItems = new ArrayList<>();
-        for (String item : itemsToGather) {
-            if (cuttableItems.contains(item)) {
-                cuttableNeededItems.add(item);
-            }
-        }
-        return cuttableNeededItems;
     }
 
     public static boolean taskRequiresItems(String taskName) {
@@ -135,5 +131,35 @@ public class ItemTracker {
         for (String task : taskRequiredItems.keySet()) {
             taskRequiredItems.get(task).remove(itemName);
         }
+    }
+
+    public static List<String> getSellableResources() {
+        List<String> sellableResources = new ArrayList<>();
+
+        for (TaskNode node : OneTapBuilder.nodes) {
+            if (node instanceof SellableProducer) {
+                sellableResources.addAll(((SellableProducer) node).getSellableResources());
+            }
+        }
+        return sellableResources;
+    }
+
+    public static int getNumberSellableResources() {
+        int numberSellableResources = 0;
+        for (String item : getSellableResources()) {
+            if (Inventory.contains(item)) {
+                Item invItem = Inventory.get(item);
+                if (invItem != null) {
+                    numberSellableResources += invItem.getAmount();
+                }
+            }
+            if (Bank.contains(item)) {
+                Item bankItem = Bank.get(item);
+                if (bankItem != null) {
+                    numberSellableResources += bankItem.getAmount();
+                }
+            }
+        }
+        return numberSellableResources;
     }
 }

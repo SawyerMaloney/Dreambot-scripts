@@ -8,7 +8,6 @@ import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
-import org.dreambot.api.utilities.Timer;
 import org.dreambot.api.wrappers.items.Item;
 
 import java.util.Iterator;
@@ -124,9 +123,9 @@ public class ItemBuyer extends TaskNode {
     }
 
     private int goToVarrock() {
-        if (OneTapBuilder.geTile.distance() > 10) {
+        if (BotUtils.geTile.distance() > 10) {
             if (Walking.shouldWalk()) {
-                Walking.walk(OneTapBuilder.geTile);
+                Walking.walk(BotUtils.geTile);
             }
         } else {
             Logger.log("GET_GOLD_AMOUNT");

@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
 public class BotUtils {
+    public static final Tile geTile = new Tile(3162, 3487);
+
     public static int retrieveItem(String item, boolean all) {
         if (all) {
             Sleep.sleepUntil(() -> Bank.withdrawAll(item), 5000);

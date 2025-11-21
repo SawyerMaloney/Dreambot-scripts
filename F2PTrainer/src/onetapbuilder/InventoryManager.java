@@ -3,9 +3,6 @@ package onetapbuilder;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.wrappers.items.Item;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class InventoryManager {
     public static void onInventoryItemAdded(Item item) {
         ItemBuyer.onInventoryItemAdded(item);
@@ -24,5 +21,4 @@ public class InventoryManager {
     public static void onInventoryItemChanged(Item incoming, Item existing) {
         ItemBuyer.onInventoryItemChanged(incoming, existing);
     }
-
 }
