@@ -68,7 +68,7 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
         }
         switch (state) {
             case WALKING_TO_BANK:
-                return walkToBank();
+                return WalkToBank.walkToBank();
             case RETRIEVE_WOOD:
                 return RetrieveWood.retrieveWood();
             case FIND_OPEN_SPOT:
@@ -76,33 +76,7 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
             case FIND_FIRE:
                 return FindFire.findFire();
             case BURN_WOOD:
-                return burnWood();
-        }
-        return 500;
-    }
-
-    private int burnWood() {
-        if (fire == null) {
-            Logger.log("Fire null, finding closest fire.");
-            fire = GameObjects.closest("Fire");
-        }
-
-        Item logs = Inventory.get(logName);
-        if (logs != null) {
-            if (fire.exists()) {
-                Logger.log("Using logs on fire.");
-                useLogsOnFire(logs);
-            } else {
-                Logger.log("Fire no longer exists.");
-                Logger.log("FIND_OPEN_SPOT");
-                state = State.FIND_OPEN_SPOT;
-            }
-        } else {
-            Logger.log("Failed to find " + logName + " in inventory.");
-            logName = findLogInInventory();
-            if (logName.isEmpty()) {
-                state = State.WALKING_TO_BANK;
-            }
+                return BurnWood.burnWood();
         }
         return 500;
     }
@@ -114,44 +88,6 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
             }
         }
         return "";
-    }
-
-    private void useLogsOnFire(Item logs) {
-        logs.useOn(fire);
-        if (Sleep.sleepUntil(() -> {
-            WidgetChild burn = Widgets.get(270, 15);
-            return burn != null && burn.isVisible();
-        }, 5000)) {
-            Logger.log("Found WidgetChild, interacting.");
-            WidgetChild burn = Widgets.get(270, 15);
-            if (burn != null && burn.interact()) {
-                Logger.log("Sleep on animating.");
-                if (BotUtils.sleepWhileAnimating(() -> Inventory.contains(logName) && !BotUtils.isLevelUpVisible(), 30000, 500, 1000)) {
-                    Logger.log("while statement evaluated to false.");
-                } else {
-                    Logger.log("Timeout hit.");
-                }
-            }
-            if (Inventory.isEmpty()) {
-                Logger.log("WALKING_TO_BANK");
-                state = State.WALKING_TO_BANK;
-            }
-        } else {
-            Logger.log("Timeout hit on finding burn widget.");
-        }
-    }
-
-    private int walkToBank() {
-        setLogName();
-        if (BotUtils.geTile.distance() > 10) {
-            if (Walking.shouldWalk()) {
-                Walking.walk(BotUtils.geTile);
-            }
-        } else {
-            Logger.log("RETRIEVE_WOOD");
-            state = State.RETRIEVE_WOOD;
-        }
-        return 500;
     }
 
 
