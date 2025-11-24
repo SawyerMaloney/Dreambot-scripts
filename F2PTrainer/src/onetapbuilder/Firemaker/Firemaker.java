@@ -70,7 +70,7 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
             case WALKING_TO_BANK:
                 return walkToBank();
             case RETRIEVE_WOOD:
-                return retrieveWood();
+                return RetrieveWood.retrieveWood();
             case FIND_OPEN_SPOT:
                 return FindOpenSpot.findOpenSpot();
             case FIND_FIRE:
@@ -154,41 +154,6 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
         return 500;
     }
 
-    private int retrieveWood() {
-        if (Bank.open()) {
-            Sleep.sleepUntil(Bank::depositAllItems, 5000);
-            if (!Inventory.contains("Tinderbox")) {
-                if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
-                    Logger.error("Failed to withdraw tinderbox.");
-                    ItemTracker.addItem("Tinderbox", "Firemaker", 1);
-                    return 500;
-                }
-                if (!Sleep.sleepUntil(() -> Inventory.contains("Tinderbox"), 5000)) {
-                    Logger.error("Did not find tinderbox in inventory.");
-                    return 0;
-                }
-            }
-
-            // withdraw logs
-            if (Sleep.sleepUntil(() -> Bank.withdrawAll(logName), 5000)) {
-                Logger.log("Withdrew logs.");
-                Bank.close();
-                Logger.log("FIND_OPEN_SPOT");
-                state = State.FIND_OPEN_SPOT;
-            } else {
-                Logger.log("Failed to withdraw logs " + logName + ".");
-                if (!Bank.contains(logName)) {
-                    // TODO get exact number of logs needed so we don't overbuy
-                    ItemTracker.addItem(logName, "Firemaker", 100);
-                    logName = stepDownOneLog();
-                    if (logName.isEmpty()) {
-                        Logger.log("No usable logs.");
-                    }
-                }
-            }
-        }
-        return 500;
-    }
 
     private String stepDownOneLog () {
         int index = logNames.indexOf(logName);
