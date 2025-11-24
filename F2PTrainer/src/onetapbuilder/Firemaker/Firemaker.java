@@ -72,7 +72,7 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
             case RETRIEVE_WOOD:
                 return retrieveWood();
             case FIND_OPEN_SPOT:
-                return findOpenSpot();
+                return FindOpenSpot.findOpenSpot();
             case FIND_FIRE:
                 return FindFire.findFire();
             case BURN_WOOD:
@@ -156,6 +156,7 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
 
     private int retrieveWood() {
         if (Bank.open()) {
+            Sleep.sleepUntil(Bank::depositAllItems, 5000);
             if (!Inventory.contains("Tinderbox")) {
                 if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
                     Logger.error("Failed to withdraw tinderbox.");
@@ -198,37 +199,6 @@ public class Firemaker extends TaskNode implements Resetable, ResourceNode {
         }
     }
 
-    private int findOpenSpot() {
-        GameObject campfire = GameObjects.closest("Forester's Campfire");
-        if (campfire != null && campfire.distance() < 5) {
-            Logger.log("FIND_FIRE");
-            state = State.FIND_FIRE;
-            return 0;
-        } else {
-            Logger.log("No nearby Forester's Campfire.");
-        }
-        List<GameObject> gos = GameObjects.all();
-        List<Player> players = Players.all();
-        Tile localTile = Players.getLocal().getTile();
-        if (BotUtils.anyOnTile(gos, localTile) || BotUtils.anyOnTile(players, localTile)) {
-            Logger.log("Tile occupied.");
-            Tile newTile;
-            if (Calculations.random(0, 2) == 0) {
-                newTile = localTile.translate(-1, 0);
-            } else {
-                newTile = localTile.translate(0, 1);
-            }
-
-            if (Map.canReach(newTile)) {
-                Logger.log("Moving to " + newTile + ".");
-                Walking.walk(newTile);
-            }
-        } else {
-            Logger.log("Unoccupied tile found.");
-            state = State.FIND_FIRE;
-        }
-        return 500;
-    }
 
     private void setLogName() {
         int firemakingSkill = Skills.getRealLevel(Skill.FIREMAKING);
