@@ -156,6 +156,7 @@ public class Fisher extends TaskNode implements Resetable, ResourceNode {
         if (destination.distance() < 5) {
             Logger.log("FISHING");
             state = State.FISHING;
+            return 0;
         } else {
             if (Walking.shouldWalk()) {
                 Walking.walk(destination);

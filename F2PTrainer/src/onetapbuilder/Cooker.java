@@ -16,7 +16,6 @@ import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.widgets.WidgetChild;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Cooker extends TaskNode implements Resetable, SellableProducer, ResourceNode {

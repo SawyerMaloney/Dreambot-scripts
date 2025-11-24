@@ -176,7 +176,7 @@ public class HighAlchBot extends AbstractScript {
         for (Item item : items) {
             for (int i = 0; i < item.getAmount(); i++) {
                 if (Magic.canCast(alchSpell)) {
-                    Logger.log("Casting " + alchSpell.toString() + " on " + item.getName());
+                    Logger.log("Casting " + alchSpell + " on " + item.getName());
                     Magic.castSpellOn(alchSpell, item);
                     Sleep.sleepUntil(() -> !Players.getLocal().isAnimating(), () -> false,5000, 50, 10);
                     Sleep.sleep(Calculations.random(100, 300));
@@ -265,13 +265,13 @@ public class HighAlchBot extends AbstractScript {
             if (previousTradesByName.containsKey(ta.getItemName()) && previousTradesByName.get(ta.getItemName()) < ta.getLimit()) {
                 int amtToBuy = goldAmount / ta.getLivePrice();
                 ta.setAmtToBuy(Math.min(amtToBuy, ta.getLimit() - previousTradesByName.get(ta.getItemName())));  // ensure buying limit is not exceeded
-                Logger.log("Adding: " + ta.toString());
+                Logger.log("Adding: " + ta);
                 goldAmount -= ta.getAmtToBuy() * ta.getLivePrice();
                 chosenAlchables.add(ta);
             } else if (!previousTradesByName.containsKey(ta.getItemName())){
                 int amtToBuy = (goldAmount / openTradingSlots) / ta.getLivePrice();
                 ta.setAmtToBuy(Math.min(amtToBuy, ta.getLimit()));  // ensure buying limit is not exceeded
-                Logger.log("Adding: " + ta.toString());
+                Logger.log("Adding: " + ta);
                 chosenAlchables.add(ta);
 
             }
@@ -294,7 +294,6 @@ public class HighAlchBot extends AbstractScript {
         int leftover = goldAmount - totalCost;
         if (totalCasts < currentNatureRunes) {
             Logger.log("Already have enough Nature runes.");
-            return;
         } else {
             buyNatureRunes = true;
             // calculate how many nature runes we need, subtracting the amount from the rest of the items

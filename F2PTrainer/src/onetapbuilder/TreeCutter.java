@@ -10,7 +10,6 @@ import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.methods.walking.impl.Walking;
 
 import org.dreambot.api.script.TaskNode;
-import org.dreambot.api.utilities.Hash;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.interactive.GameObject;
@@ -39,7 +38,7 @@ public class TreeCutter extends TaskNode implements Resetable, ResourceNode {
     ));
 
     private final List<String> axeNames = new ArrayList<>(Arrays.asList("Bronze axe", "Adamant axe", "Mithril axe", "Rune axe"));
-    private final Map<String, Integer> treeSkillMap = new HashMap();
+    private final Map<String, Integer> treeSkillMap = new HashMap<>();
     private int axe_index = 0;
 
     private Tile destination;

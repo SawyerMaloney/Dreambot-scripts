@@ -1,6 +1,5 @@
 package onetapbuilder.Firemaker;
 
-import onetapbuilder.BotUtils;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.interactive.GameObjects;
 import org.dreambot.api.utilities.Logger;
@@ -30,6 +29,7 @@ public class BurnWood {
                 Logger.log("Fire no longer exists.");
                 Logger.log("FIND_OPEN_SPOT");
                 Firemaker.state = Firemaker.State.FIND_OPEN_SPOT;
+                return 0;
             }
         } else {
             Logger.log("Failed to find " + Firemaker.logName + " in inventory.");

@@ -1,6 +1,5 @@
 package onetapbuilder;
 
-import org.apache.tools.ant.Task;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.item.GroundItems;
@@ -19,7 +18,6 @@ public class BonesCollector extends TaskNode {
     private boolean collecting = false;
 
     public static int inventories = 0;
-    public static int inventory_limit = 3;
 
     @Override
     public boolean accept() {

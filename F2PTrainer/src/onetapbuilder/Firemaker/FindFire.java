@@ -28,7 +28,6 @@ public class FindFire {
             Logger.log("Got tinderbox. Using on " + Firemaker.logName + ".");
             tinderbox.useOn(Firemaker.logName);
             BotUtils.sleepWhileAnimating(() -> true, 10000, 500, 1000);
-            fire = GameObjects.closest("Fire");
             Logger.log("BURN_WOOD");
             Firemaker.state = Firemaker.State.BURN_WOOD;
         }
