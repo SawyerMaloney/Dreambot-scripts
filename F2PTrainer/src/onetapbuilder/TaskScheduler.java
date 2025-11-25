@@ -1,5 +1,6 @@
 package onetapbuilder;
 
+import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.utilities.Timer;
 
@@ -19,7 +20,15 @@ public class TaskScheduler {
             case "ItemSeller":
                 return ItemTracker.getNumberSellableResources() > 500 || OneTapBuilder.selling;
             case "ItemBuyer":
-                return (ItemTracker.needsBuyableItems() || ItemTracker.hasOrderedItems());
+                boolean ret = ItemTracker.needsBuyableItems() || ItemTracker.hasOrderedItems();
+                if (!ret) {
+                    OneTapBuilder.nodes.stream()
+                            .filter(obj -> obj instanceof ItemBuyer)
+                            .map(obj -> (ItemBuyer) obj)
+                            .findFirst()
+                            .ifPresent(ItemBuyer::reset);
+                }
+                return ret;
             case "Init":
                 return !init;
             case "TaskClearer":
