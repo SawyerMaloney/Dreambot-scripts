@@ -22,7 +22,10 @@ public class RetrieveWood {
 
     public static int retrieveWood() {
         if (Bank.open()) {
-            Sleep.sleepUntil(Bank::depositAllItems, 5000);
+            Sleep.sleepUntil(() -> Bank.depositAllExcept(item ->
+                    item.getName().equals("Tinderbox") || item.getName().equals(Firemaker.logName)
+                    && !item.isNoted()), 5000);
+
             if (!Inventory.contains("Tinderbox")) {
                 if (!Sleep.sleepUntil(() -> Bank.withdraw("Tinderbox"), 5000)) {
                     Logger.error("Failed to withdraw tinderbox.");

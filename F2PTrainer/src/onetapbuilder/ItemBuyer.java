@@ -13,7 +13,7 @@ import org.dreambot.api.wrappers.items.Item;
 import java.util.Iterator;
 import java.util.Map;
 
-public class ItemBuyer extends TaskNode {
+public class ItemBuyer extends TaskNode implements Resetable {
     private enum State {
         GO_TO_VARROCK,
         GET_GOLD_AMOUNT,
@@ -23,10 +23,17 @@ public class ItemBuyer extends TaskNode {
         WAIT_FOR_ORDERS
     }
     private static State state = State.GO_TO_VARROCK;
+    private boolean resetOtherTasks = false;
 
     @Override
     public boolean accept() {
         return TaskScheduler.valid("ItemBuyer");
+    }
+
+    @Override
+    public void reset() {
+        state = State.GO_TO_VARROCK;
+        resetOtherTasks = false;
     }
 
     @Override
@@ -121,6 +128,10 @@ public class ItemBuyer extends TaskNode {
     }
 
     private int goToVarrock() {
+        // reset task specific flags so that when we return to the task it tries over again
+        if (!resetOtherTasks) {
+            TaskClearer.reset();
+        }
         if (BotUtils.geTile.distance() > 10) {
             if (Walking.shouldWalk()) {
                 Walking.walk(BotUtils.geTile);

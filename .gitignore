@@ -28,3 +28,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Secrets, secrets, are no fun ###
+**/config.properties
