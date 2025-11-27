@@ -1,4 +1,4 @@
-package RunecrafterAbstractScript;
+package Runecrafter.Skilling;
 
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.grandexchange.GrandExchange;

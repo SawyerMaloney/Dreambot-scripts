@@ -1,10 +1,11 @@
-package RunecrafterAbstractScript;
+package Runecrafter.Skilling;
 
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.container.impl.equipment.Equipment;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.wrappers.items.Item;
+import Runecrafter.Runecrafter;
 
 public class BankAction {
     public static int execute(Skilling ctx) {
@@ -16,21 +17,21 @@ public class BankAction {
             if (!Inventory.contains(tiaraName) && !Inventory.contains(talismanName) && !Equipment.contains(tiaraName)) {
                 if (Bank.contains(tiaraName)) {
                     Logger.log("Retrieving " + tiaraName + ".");
-                    Skilling.retrieveItem(tiaraName, false);
+                    Runecrafter.retrieveItem(tiaraName, false);
                     Item tiara = Inventory.get(tiaraName);
                     if (tiara != null) {
                         tiara.interact("Wear");
                     }
                 } else if (Bank.contains(talismanName)) {
                     Logger.log("Retrieving " + talismanName + ".");
-                    Skilling.retrieveItem(talismanName, false);
+                    Runecrafter.retrieveItem(talismanName, false);
                 } else {
                     Logger.log("Doesn't have talisman or tiara");
                     return -1;
                 }
             }
             if (Bank.contains("Pure essence")) {
-                Skilling.retrieveItem("Pure essence", true);
+                Runecrafter.retrieveItem("Pure essence", true);
                 Logger.log("WALK_TO_ALTAR");
                 ctx.setStateWalkToAltar();
             } else {

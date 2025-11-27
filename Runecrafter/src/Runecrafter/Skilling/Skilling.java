@@ -1,12 +1,9 @@
-package RunecrafterAbstractScript;
+package Runecrafter.Skilling;
 
-import org.dreambot.api.methods.container.impl.Inventory;
-import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.utilities.Logger;
-import org.dreambot.api.utilities.Sleep;
 
 public final class Skilling {
     // Skilling-specific state machine
@@ -32,11 +29,10 @@ public final class Skilling {
 
     private boolean placedOrder = false;
     private int openSlot = 0;
-
-    public Skilling() { }
-
+    
     // Instance loop for skilling
-    public int onLoop() {
+    public int onLoop(Runecrafter.Runecrafter runecrafter) {
+        checkSwitchToQuesting(runecrafter);
         switch (state) {
             case WALK_TO_BANK:
                 return WalkToBankAction.execute(this);
@@ -54,6 +50,12 @@ public final class Skilling {
                 return BuyRunesAction.execute(this);
         }
         return 0;
+    }
+
+    private void checkSwitchToQuesting(Runecrafter.Runecrafter rc) {
+        if (rc.getQuesting().canQuest()) {
+            rc.setModeQuesting();
+        }
     }
 
     // Skilling utilities and configuration
@@ -77,20 +79,6 @@ public final class Skilling {
         }
 
         Logger.log("Skill: " + rc + ". Tiara name: " + tiara_name);
-    }
-
-    public static int retrieveItem(String item, boolean all) {
-        if (all) {
-            Sleep.sleepUntil(() -> Bank.withdrawAll(item), 5000);
-        } else {
-            Sleep.sleepUntil(() -> Bank.withdraw(item), 5000);
-        }
-        Sleep.sleepUntil(() -> Inventory.contains(item), 5000);
-        if (!Inventory.contains(item)) {
-            Logger.log("Failed to get item " + item);
-            return -1;
-        }
-        return 1;
     }
 
     // Getters and setters for actions

@@ -1,4 +1,4 @@
-package RunecrafterAbstractScript;
+package Runecrafter.Skilling;
 
 import org.dreambot.api.methods.interactive.GameObjects;
 import org.dreambot.api.utilities.Logger;

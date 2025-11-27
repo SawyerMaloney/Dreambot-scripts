@@ -1,15 +1,15 @@
-package RunecrafterAbstractScript;
+package Runecrafter.Skilling;
 
 import org.dreambot.api.methods.walking.impl.Walking;
 
-public class WalkToBankAction {
+public class WalkToAltarAction {
     public static int execute(Skilling ctx) {
-        if (ctx.getBankTile().distance() > 5) {
+        if (ctx.getAltarTile().distance() > 1) {
             if (Walking.shouldWalk()) {
-                Walking.walk(ctx.getBankTile());
+                Walking.walk(ctx.getAltarTile());
             }
         } else {
-            ctx.setStateBanking();
+            ctx.setStateUseRuins();
         }
         return 500;
     }
